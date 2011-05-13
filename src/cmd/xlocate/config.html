@@ -1,0 +1,17 @@
+<h1>Effective Configuration for this xlocate instance</h1>
+
+Match only the basename part of files, stripping the path: <b>{StripPath}</b> <br>
+Write out the number of matching entries and quit: <b>{CountEntries}</b> <br>
+List of : separated database files (xlocate will try to determine the format automatically): <b>{DBFiles}</b> <br>
+List only existing files: <b>{Existing}</b> <br>
+Follow symlinks when checking for existence: <b>{Follow}</b> <br>
+Ignore case: <b>{IgnoreCase}</b> <br>
+Limit the number of listed entries, a negative number means no limit: <b>{Limit}</b> <br>
+List only (read-)accessable files: <b>{Accessable}</b> <br>
+Levenshtein parameters. Parameter format is ThresholdLevensteinDistance,DelCost,InsCost,SubsCost all integers: <b>{LevenshteinParams}</b> <br>
+Comma separated list of search methods: hashmap (exact matches [except for -x and -i options], very fast.), substring (using strings.Contains), wildcard (using path.Match), regexp (using sre2), levenshtein (fuzzy search, see -levenshtein option as well). Search will be repeated using the next method if the current method gives 0 hits.: <b>{SearchMethod}</b> <br>
+Ignore file extension. (For definition of extension, see Go's package documentation on path.Ext): <b>{StripExtension}</b> <br>
+Basename must match (this's slightly different than the GNU Locate's -b option: <b>{BasenameMustMatch}</b> <br>
+List symlinks: <b>{SymlinkCandidates}</b> <br>
+HTTP service address (eg. ':6060'): <b>{HttpAddr}</b> <br>
+Template for HTTP results: <b>{TemplateString|html}</b> <br>
