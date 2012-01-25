@@ -1,6 +1,6 @@
 package locate
 
-// TODO(salviati): Instead of merging databases treat them separately using goroutines (?)
+// TODO(utkan): Instead of merging databases treat them separately using goroutines (?)
 
 import (
 	"bytes"
@@ -58,7 +58,7 @@ func (db *DB) readDBs() error {
 		}
 		if err != nil {
 			return err
-		} // FIXME(salviati): We can move on to the next file instead of giving up
+		} // FIXME(utkan): We can move on to the next file instead of giving up
 	}
 
 	files := make([]string, len(fmap))
@@ -143,7 +143,7 @@ func (db *DB) readMlocateDB(fb []byte) (nametab []string, e error) {
 	entry := rem
 
 	// Get the entries themselves
-	// FIXME(salviati): Something's terribly slowing things down here.
+	// FIXME(utkan): Something's terribly slowing things down here.
 	rem = entry
 	dirNameNow := true
 	curDir := rootpath
@@ -175,7 +175,7 @@ func (db *DB) readMlocateDB(fb []byte) (nametab []string, e error) {
 	return nametab, nil
 }
 
-// BUG(salviati): Let the caller of NewDB know whether Accessable is in effect or not.
+// BUG(utkan): Let the caller of NewDB know whether Accessable is in effect or not.
 
 // NewDB reads filenames in given databases and stores the union in a newly created DB.
 // If everything goes fine, new DB is returned.
@@ -183,8 +183,8 @@ func NewDB(dbFilenames []string, options *Options) (db *DB, err error) {
 	db = &DB{dbFilenames: dbFilenames}
 	db.options = *options
 
-	// BUG(salviati): Accessable option should not require RO access to _all_ DB files.
-	if db.options.Accessable { // FIXME(salviati): No R_OK(=4) in syscall package!
+	// BUG(utkan): Accessable option should not require RO access to _all_ DB files.
+	if db.options.Accessable { // FIXME(utkan): No R_OK(=4) in syscall package!
 		for _, dbFilename := range dbFilenames {
 			if syscall.Access(dbFilename, 4) != nil {
 				db.options.Accessable = false

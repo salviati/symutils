@@ -56,7 +56,7 @@ var accessable = flag.Bool("a", true, "List only (read-)accessable files (disabl
 
 var levenshteinParams = flag.String("levenshtein", "", "Levenshtein parameters. Parameter format is ThresholdLevensteinDistance,DelCost,InsCost,SubsCost all integers")
 var searchMethod = flag.String("m", "hashmap,substring",
-	"Comma separated list of search methods: hashmap (exact matches [except for -x and -i options], very fast. Requires a hash-map initialization on first usage.), substring (using strings.Contains), wildcard (using filepath.Match), regexp (using sre2), levenshtein (fuzzy search, see -levenshtein option as well). Search will be repeated using the next method if the current method gives 0 hits.")
+	"Comma separated list of search methods: hashmap (exact matches [except for -x and -i options], very fast. Requires a hash-map initialization on first usage.), substring (using strings.Contains), wildcard (using filepath.Match), regexp, levenshtein (fuzzy search, see -levenshtein option as well). Search will be repeated using the next method if the current method gives 0 hits.")
 var nworkers = flag.Uint("nworkers", 1, "The number of parallel workers searching in one database")
 var stripExtension = flag.Bool("E", false, "Ignore file extension. (For definition of extension, see Go's package documentation on filepath.Ext)")
 var basenameMustMatch = flag.Bool("B", false, "Basename must match (this's slightly different than the GNU Locate's -b option).")
@@ -64,7 +64,7 @@ var basenameMustMatch = flag.Bool("B", false, "Basename must match (this's sligh
 var symlinkCandidates = flag.Bool("s", true, "List symlinks") //FIXME: What about S in GNU locate?
 var showVersion = flag.Bool("V", false, "Display version and licensing information, and quit.")
 var httpAddr = flag.String("http", "", "HTTP service address (eg. ':9188')")
-var templateString = flag.String("template", "{N}. <a href=\"file://{Path}\">{Base}</a><br>", "Template for HTTP results")
+var templateString = flag.String("template", "{N}. <a href=\"file://{{Path}}\">{{Base}}</a><br>", "Template for HTTP results")
 
 var db *locate.DB
 var tpl *template.Template

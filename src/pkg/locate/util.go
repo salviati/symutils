@@ -18,7 +18,7 @@ func stripExtension(name string) string {
 }
 
 // Filters given file name accordingly
-// FIXME: Do not screw the pattern here, write a new function bakePattern instead
+// FIXME(utkan): Do not screw the pattern here, write a new function bakePattern instead
 func bakeName(name string, options *Options) string {
 	//name = filepath.Clean(name)
 
@@ -81,7 +81,7 @@ func fileOkay(f string, options *Options) (bool, error) {
 		return false, nil
 	} // Drop dead files...
 
-	if options.Accessable { // FIXME(salviati): No R_OK(=4) in syscall package!
+	if options.Accessable { // FIXME(utkan): No R_OK(=4) in syscall package!
 		err = syscall.Access(f, 4)
 		if err != nil {
 			return false, nil
@@ -103,7 +103,7 @@ func matchOkay(f string, options *Options) (ok bool, err error) {
 
 	ok, err = fileOkay(f, options)
 	if err != nil {
-		return ok, err //FIXME
+		return ok, err //FIXME(utkan):
 	}
 	return
 }

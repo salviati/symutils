@@ -21,7 +21,7 @@
 */
 
 /*
-  TODO(salviati):
+  TODO(utkan):
 	* Revise log levels for vprintf() calls
 	* Implement ignoreChars option
 */
@@ -76,7 +76,7 @@ var ignoreChars = flag.String("ignore", "", "Ignore the given set of characters 
 var filter = flag.String("filter", "", `Filter search results using regexp.MatchString. Separate filters with a newline (\n). If the first character of the filter is !, those that match with the regexp are _not_ listed.`)
 
 var searchMethod = flag.String("m", "hashmap",
-	"Comma separated list of search methods: hashmap (exact matches [except for -x and -i options], very fast. Requires a hash-map initialization on first usage.), substring (using strings.Contains), wildcard (using path.Match), regexp (using sre2), levenshtein (fuzzy search, see -levenshtein option as well). Search will be repeated using the next method if the current method gives 0 hits.")
+	"Comma separated list of search methods: hashmap (exact matches [except for -x and -i options], very fast. Requires a hash-map initialization on first usage.), substring (using strings.Contains), wildcard (using path.Match), regexp, levenshtein (fuzzy search, see -levenshtein option as well). Search will be repeated using the next method if the current method gives 0 hits.")
 var nworkers = flag.Uint("nworkers", 1, "The number of parallel workers searching in one database")
 
 var repaired, deleted, skipped, dead int
