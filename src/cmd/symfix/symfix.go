@@ -38,15 +38,16 @@ package main
 import (
 	"flag"
 	"fmt"
-	"strings"
+	"log"
 	"os"
 	"path/filepath"
-	"log"
-	"time"
-	"syscall"
 	"regexp"
+	"strings"
 	"symutils/fuzzy"
 	"symutils/locate"
+	"syscall"
+	"time"
+	"errors"
 )
 
 const (
@@ -88,6 +89,11 @@ var brokenLinks map[string]string
 var filterIn []*regexp.Regexp  // Only entries that match all these filters will be listed
 var filterOut []*regexp.Regexp // Only entries that do not match any of these filters will be listed
 
+var (
+	ErrUserCancel = errors.New("user cancel")
+	ErrCircular   = errors.New("circular symlink")
+)
+
 const (
 	pkg, version, author, about, usage string = "symfix", VERSION, "Utkan Güngördü",
 		"symfix(1) finds and (somewhat interactively) repairs broken symlinks.\nIt uses locate(1) to look up broken symlinks.",
@@ -99,7 +105,7 @@ const (
    used, filepath.Base(target)) pointing to it.
    Depending on the options, the function may expect user-interaction
    to confirm the action. */
-func relink(name, target string) (e int) {
+func relink(name, target string) error {
 	newname := name
 	if *renameSymlink {
 		newname = filepath.Base(name)
@@ -107,33 +113,33 @@ func relink(name, target string) (e int) {
 
 	if target == newname {
 		vprintf(WARN, "Symlink shouldn't be pointing to itself!\n")
-		return -1
+		return ErrCircular
 	}
 
 	if (target == "" && false == ynQuestion("Really unlink the file?: %s", name)) ||
 		false == ynQuestion("Really relink the file?: %s -> %s", newname, target) {
-		return 3
+		return ErrUserCancel
 	}
 
-	e = syscall.Unlink(name)
-	if e != 0 {
-		vprintf(WARN, "%v\n", os.PathError{"unlink", name, os.Errno(e)})
-		return
+	err := syscall.Unlink(name)
+	if err != nil {
+		vprintf(WARN, "%v\n", nil)
+		return nil
 	}
 
 	if target == "" {
 		vprintf(INFO, "unlinked %v\n", name)
 		deleted++
-		return
+		return nil
 	}
 
-	e = syscall.Symlink(target, newname)
-	if e != 0 {
-		vprintf(WARN, "%v\n", os.PathError{"symlink", newname, os.Errno(e)})
+	err = syscall.Symlink(target, newname)
+	if err != nil {
+		vprintf(WARN, "%v\n", err)
 	}
 	vprintf(INFO, "created symlink: %v -> %v\n", newname, target)
 	repaired++
-	return 0
+	return nil
 }
 
 // Filters a give file name.
@@ -155,24 +161,26 @@ func filterResult(name string) bool {
 	return true
 }
 
-func mylocate(db *locate.DB, pattern string) (matches []string, err os.Error) {
-	for _, method := range strings.Split(*searchMethod, ",", -1) {
-		t0 := time.Nanoseconds()
+func mylocate(db *locate.DB, pattern string) (matches []string, err error) {
+	for _, method := range strings.Split(*searchMethod, ",") {
+		t0 := time.Now()
 		matches, err = locate.LocateAll(db, method, pattern)
-		t1 := time.Nanoseconds()
-		vprintf(LOG, "locate %s using %s %.3f seconds-->\n", pattern, method, float64(t1-t0)/1e9)
-		if len(matches) > 0 { return matches, err }
+		t1 := time.Now()
+		vprintf(LOG, "locate %s using %s %.3f seconds-->\n", pattern, method, float64(t1.Sub(t0))/1e9)
+		if len(matches) > 0 {
+			return matches, err
+		}
 	}
 	return matches, err
 }
 
 /* Fixes a given single symlink.
    Returns error code. */
-func symfix(filename string) (e int) {
+func symfix(filename string) error {
 	ok, dst, _ := linkAlive(filename, *matchNames)
 	if ok {
 		vprintf(LOG, "%v -> %v\n", filename, dst)
-		return 0
+		return nil
 	}
 
 	vprintf(INFO, "%v -> %v (broken)\n", filename, dst)
@@ -207,7 +215,7 @@ func symfix(filename string) (e int) {
 		if *deleteDeadLinks {
 			return relink(filename, "")
 		}
-		return 0
+		return nil
 	}
 
 	if len(matches) == 1 {
@@ -218,31 +226,36 @@ func symfix(filename string) (e int) {
 	if *automatedMode {
 		vprintf(INFO, "Automated mode, skipping results\n")
 		skipped++
-		return 0
+		return nil
 	}
 
 	choice := getInteractiveChoice(matches)
 	if choice == -1 {
-		return 3
+		return ErrUserCancel
 	} //user cancel
 	return relink(filename, matches[choice])
 
-	return 0
+	return nil
 }
 
-type walkEnt struct{}
+func WalkFunc(path string, info os.FileInfo, err error) error {
+	if err != nil {
+		vprintf(WARN, "%v\n", err)
+		return err
+	}
 
-func (*walkEnt) VisitDir(filename string, d *os.FileInfo) bool {
-	return *recurse
-}
+	if info.IsDir() {
+		if *recurse == false { return filepath.SkipDir }
+		return nil
+	}
 
-func (*walkEnt) VisitFile(filename string, d *os.FileInfo) {
-	if d.IsSymlink() {
-		e := symfix(filename)
-		if e == 3 {
+	if info.Mode() & os.ModeSymlink != 0 {
+		if err := symfix(path); err == ErrUserCancel {
 			skipped++
 		}
 	}
+
+	return nil
 }
 
 /* Repair (recursively) symlink(s) */
@@ -253,12 +266,7 @@ func symfixr(filename string) {
 		return
 	}
 
-	v := new(walkEnt)
-	ech := make(chan os.Error)
-	go func() { filepath.Walk(filename, v, ech); close(ech) }()
-	for e := range ech {
-		vprintf(WARN, "%v\n", e)
-	}
+	filepath.Walk(filename, WalkFunc)
 }
 
 func init() {
@@ -278,9 +286,8 @@ func init() {
 
 	vprintf(INFO, "It's recommended that you update your database files by updatedb(8) prior to execution.\n")
 
-
 	if *filter != "" {
-		filters := strings.Split(*filter, "\n", -1)
+		filters := strings.Split(*filter, "\n")
 		filterIn = make([]*regexp.Regexp, 0, len(filters))
 		filterOut = make([]*regexp.Regexp, 0, len(filters))
 
@@ -298,7 +305,9 @@ func init() {
 
 	if *levenshteinParams != "" {
 		n, err := fmt.Sscanf(*levenshteinParams, "%d,%d,%d,%d", &fuzzyThreshold, &fuzzyCost.Del, &fuzzyCost.Ins, &fuzzyCost.Subs)
-		if err != nil { log.Fatal(err) }
+		if err != nil {
+			log.Fatal(err)
+		}
 		if n != 4 {
 			vprintf(ERR, "Invalid number of fields for fuzzy search parameter.\n")
 		}
@@ -318,12 +327,12 @@ func init() {
 		NWorkers:             *nworkers,
 	}
 
-	var err os.Error
+	var err error
 	vprintf(INFO, "Reading databases...\n")
-	timeStart := time.Nanoseconds()
+	timeStart := time.Now()
 	db, err = locate.NewDB(filepath.SplitList(*dbPath), &options)
-	timeEnd := time.Nanoseconds()
-	vprintf(INFO, "Done. Took %.2f seconds.\n", float64(timeEnd-timeStart)/1e9)
+	timeEnd := time.Now()
+	vprintf(INFO, "Done. Took %.2f seconds.\n", float64(timeEnd.Sub(timeStart))/1e9)
 	if err != nil {
 		log.Fatal(err)
 	}

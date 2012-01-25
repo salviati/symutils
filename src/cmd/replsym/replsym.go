@@ -21,20 +21,19 @@
    51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-// TODO(salviati): Handle relative symlinks
-// TODO(salviati): Replicate rename-as-basename-only functionality.
-// BUG(salviati): wildcard matching matches only against basenames (filepath.Match)
+// TODO(utkan): Handle relative symlinks
+// TODO(utkan): Replicate rename-as-basename-only functionality.
+// BUG(utkan): wildcard matching matches only against basenames (filepath.Match)
 
 // replsym(1) finds symlinks pointing to a target, or targets described
 // by a pattern, and replaces them with a given, new target.
 package main
 
-
 import (
-	"log"
-	"fmt"
-	"os"
 	"flag"
+	"fmt"
+	"log"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -51,12 +50,12 @@ var showHelp = flag.Bool("h", false, "Display help and quit")
 
 const (
 	pkg, version, author, about, usage string = "replsym", VERSION, "Doğan Çeçen, Utkan Güngördü",
-	"replsym finds symlinks pointing to a target (or targets) described" +
-	"by a pattern, and replaces them with a given new target." +
-	"If no targets for replacement are given, replsym just prints out" +
-	"the matching symlinks, thus replicating the behavior of the" +
-	"former lssym(1) tool of symutils.",
-	"replsym -p target_pattern [-t new_target] [-m match_type -i -v -r] symlink1/dir1 ... symlinkN/dirN"
+		"replsym finds symlinks pointing to a target (or targets) described" +
+			"by a pattern, and replaces them with a given new target." +
+			"If no targets for replacement are given, replsym just prints out" +
+			"the matching symlinks, thus replicating the behavior of the" +
+			"former lssym(1) tool of symutils.",
+		"replsym -p target_pattern [-t new_target] [-m match_type -i -v -r] symlink1/dir1 ... symlinkN/dirN"
 )
 
 var match func(pattern, filename string) bool
@@ -69,45 +68,50 @@ func imatch(pattern, filename string) bool {
 	return match(pattern, filename)
 }
 
-
-type Visitor int
-
-func (Visitor) VisitFile(filename string, f *os.FileInfo) {
-	if !f.IsSymlink() {
-		return
+func WalkFunc(path string, info os.FileInfo, err error) error {
+	if err != nil {
+		vprintf(ERR, "%v\n", err)
+		return err
 	}
 
-	oldtarget, err := os.Readlink(filename)
+	if info.IsDir() {
+		if *recurse == false { return filepath.SkipDir }
+		return nil
+	}
+
+	issym := info.Mode() & os.ModeSymlink != 0
+
+	if !issym {
+		return nil
+	}
+
+	oldtarget, err := os.Readlink(path)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	if imatch(*pattern, oldtarget) {
-		vprintf(INFO, "%s -> %s matches the pattern %s", filename, oldtarget, *pattern)
+		vprintf(INFO, "%s -> %s matches the pattern %s", path, oldtarget, *pattern)
 
 		if *target == "" {
-			fmt.Println(makeAbsolute(filename, ""))
-			return
+			fmt.Println(makeAbsolute(path, ""))
+			return nil
 		}
 
-		newname := filename
+		newname := path
 		if *rename {
 			newname = filepath.Base(*target)
-			dir, _ := filepath.Split(filename)
+			dir, _ := filepath.Split(path)
 			newname = filepath.Join(dir, newname)
 		}
 
-		vprintf(INFO, "%s -> %s is being replaced by  %s -> %s\n", filename, oldtarget, newname, *target)
+		vprintf(INFO, "%s -> %s is being replaced by  %s -> %s\n", path, oldtarget, newname, *target)
 
-		replace(newname, filename, *target)
+		replace(newname, path, *target)
 	}
+
+	return nil
 }
-
-
-func (Visitor) VisitDir(filename string, f *os.FileInfo) bool {
-	return *recurse
-}
-
 
 func replace(newname, oldname, target string) {
 	err := os.Remove(oldname)
@@ -169,13 +173,9 @@ func init() {
 }
 
 func main() {
-	var v Visitor
 	for _, dir := range flag.Args() {
-		ch := make(chan os.Error)
-		go func() { filepath.Walk(dir, v, ch); close(ch) }()
-
-		for e := range ch {
-			log.Fatal(e)
+		if err := filepath.Walk(dir, WalkFunc); err != nil {
+			log.Fatal(err)
 		}
 	}
 }

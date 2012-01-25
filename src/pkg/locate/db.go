@@ -3,14 +3,15 @@ package locate
 // TODO(salviati): Instead of merging databases treat them separately using goroutines (?)
 
 import (
-	"io/ioutil"
-	"encoding/binary"
 	"bytes"
+	"encoding/binary"
+	"errors"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"syscall"
-	"exec"
 	"sync"
+	"syscall"
 )
 
 // Represents a database file.
@@ -19,11 +20,11 @@ type DB struct {
 	files       []string // Union of files listed in db files
 	options     Options
 
-	basenames map[string][]string // A map of file basenames -> path of files with that basename
+	basenames  map[string][]string // A map of file basenames -> path of files with that basename
 	hasmapLock sync.Mutex
 }
 
-func (db *DB) bakeBasenames() os.Error {
+func (db *DB) bakeBasenames() error {
 	db.hasmapLock.Lock()
 	defer db.hasmapLock.Unlock()
 
@@ -39,10 +40,12 @@ func (db *DB) bakeBasenames() os.Error {
 
 // readDBs calls readDB for all database files, concatenates s/and sorts// the output.
 // Result is stored in DB's files field.
-func (db *DB) readDBs() os.Error {
+func (db *DB) readDBs() error {
 	if len(db.dbFilenames) == 1 {
 		nametab, err := db.readDB(db.dbFilenames[0])
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		db.files = nametab
 		return nil
 	}
@@ -53,7 +56,9 @@ func (db *DB) readDBs() os.Error {
 		for _, f := range nametab {
 			fmap[f] = true
 		}
-		if err != nil { return err } // FIXME(salviati): We can move on to the next file instead of giving up
+		if err != nil {
+			return err
+		} // FIXME(salviati): We can move on to the next file instead of giving up
 	}
 
 	files := make([]string, len(fmap))
@@ -67,28 +72,36 @@ func (db *DB) readDBs() os.Error {
 	return nil
 }
 
-func setgid() os.Error {
+func setgid() error {
 	exe, err := exec.LookPath(os.Args[0])
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	st, err := os.Stat(exe)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
-	e := syscall.Setgid(st.Gid)
-	if e != 0 { return &os.PathError{"setgid", exe, os.Errno(e)} }
-	return nil
+	gid := int(st.(*os.FileStat).Sys.(*syscall.Stat_t).Gid)
+
+	return syscall.Setgid(gid)
 }
 
-func (db *DB) readDB(filename string) (r []string, err os.Error) {
+func (db *DB) readDB(filename string) (r []string, err error) {
 	var fb []byte
-	
+
 	func() {
 		gid := syscall.Getgid()
-		if setgid() != nil { defer syscall.Setgid(gid) }
+		if setgid() != nil {
+			defer syscall.Setgid(gid)
+		}
 		fb, err = ioutil.ReadFile(filename)
 	}()
 
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	if bytes.Compare(fb[0:8], []byte("\x00mlocate")) == 0 {
 		return db.readMlocateDB(fb)
@@ -97,7 +110,7 @@ func (db *DB) readDB(filename string) (r []string, err os.Error) {
 	return
 }
 
-func (db *DB) readMlocateDB(fb []byte) (nametab []string, e os.Error) {
+func (db *DB) readMlocateDB(fb []byte) (nametab []string, e error) {
 	/*
 		8 bytes magic
 		4 bytes configuration block size (BE)
@@ -108,7 +121,7 @@ func (db *DB) readMlocateDB(fb []byte) (nametab []string, e os.Error) {
 	*/
 
 	if bytes.Compare(fb[0:8], []byte("\x00mlocate")) != 0 {
-		e = os.NewError("Not an mlocate database file")
+		e = errors.New("Not an mlocate database file")
 		return
 	}
 
@@ -117,7 +130,7 @@ func (db *DB) readMlocateDB(fb []byte) (nametab []string, e os.Error) {
 
 	dbversion := fb[12]
 	if dbversion != 0 {
-		e = os.NewError("Invalid database version")
+		e = errors.New("Invalid database version")
 		return
 	}
 
@@ -144,7 +157,7 @@ func (db *DB) readMlocateDB(fb []byte) (nametab []string, e os.Error) {
 			dirNameNow = false
 			nametab = append(nametab, curDir)
 		} else {
-			nametab = append(nametab, curDir + "/" + name)
+			nametab = append(nametab, curDir+"/"+name)
 		}
 		ftype := rem[0]
 		rem = rem[1:]
@@ -166,15 +179,14 @@ func (db *DB) readMlocateDB(fb []byte) (nametab []string, e os.Error) {
 
 // NewDB reads filenames in given databases and stores the union in a newly created DB.
 // If everything goes fine, new DB is returned.
-func NewDB(dbFilenames []string, options *Options) (db *DB, err os.Error) {
+func NewDB(dbFilenames []string, options *Options) (db *DB, err error) {
 	db = &DB{dbFilenames: dbFilenames}
 	db.options = *options
 
 	// BUG(salviati): Accessable option should not require RO access to _all_ DB files.
 	if db.options.Accessable { // FIXME(salviati): No R_OK(=4) in syscall package!
 		for _, dbFilename := range dbFilenames {
-			e := syscall.Access(dbFilename, 4)
-			if e != 0 {
+			if syscall.Access(dbFilename, 4) != nil {
 				db.options.Accessable = false
 				break
 			}

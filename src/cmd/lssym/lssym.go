@@ -29,8 +29,8 @@
 package main
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -44,6 +44,7 @@ const (
 //var recurse = flag.Bool("r", false, "Recursive search") //FIXME: can mean "allow depth > 1"
 
 var showHelp = flag.Bool("h", false, "Display help")
+
 //var symDirFollow = flag.Bool("F", false, "Follow symlinks when recursing (does nothing in this version)") //FIXME
 var showVersion = flag.Bool("version", false, "Show version and license info and quit")
 var nmatchMin = flag.Int("N", 0, "Minimum number of identical symlinks (in different dirs) to be enlisted. (0 means # of given directories.)")
@@ -56,37 +57,45 @@ var nametabs []nametab_t
 var curNametab nametab_t
 var currentDir string
 
-type walkEnt struct{}
 
-func (*walkEnt) VisitDir(dname string, d *os.FileInfo) bool {
-	currentDir = dname
-	//return *recurse
-	return true
-}
-
-func (*walkEnt) VisitFile(filename string, d *os.FileInfo) {
-	if !d.IsSymlink() && !*includeOrdinaryFiles {
-		return
+func WalkFunc(path string, info os.FileInfo, err error) error  {
+	if err != nil {
+		vprintf(WARN, "%v\n", err)
+		return err
 	}
 
-	if d.IsSymlink() {
+	if info.IsDir() {
+		currentDir = path
+		//if *recurse == false { return filepath.SkipDir }
+		return nil
+	}
+
+	issym := info.Mode() & os.ModeSymlink != 0
+	if !issym && !*includeOrdinaryFiles {
+		return nil
+	}
+
+	if issym {
 		if *checkSymlink {
-			ok, _, _ := linkAlive(filename, false)
+			ok, _, _ := linkAlive(path, false)
 			if !ok {
-				return
+				vprintf(INFO, "deadlink %v: %v\n", path, err)
+				return nil
 			}
 		}
 
-		var err os.Error
-		filename, err = os.Readlink(filename)
+		var err error
+		path, err = os.Readlink(path)
 
 		if err != nil {
 			vprintf(INFO, "%v\n", err)
-			return
+			return nil
 		}
 	}
 
-	curNametab[filename] = 1
+	curNametab[path] = 1
+
+	return nil
 }
 
 func walk(dname string) {
@@ -96,15 +105,12 @@ func walk(dname string) {
 		return
 	}
 
-	if !dir.IsDirectory() {
+	if !dir.IsDir() {
 		vprintf(ERR, "%s is not a directory\n", dname)
 	}
 
-	v := new(walkEnt)
-	ech := make(chan os.Error)
-	go func() { filepath.Walk(dname, v, ech); close(ech) }()
-	for e := range ech {
-		vprintf(WARN, "%v\n", e)
+	if err := filepath.Walk(dname, WalkFunc); err != nil {
+		vprintf(WARN, "%v\n", err)
 	}
 }
 

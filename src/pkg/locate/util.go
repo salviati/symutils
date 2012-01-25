@@ -1,12 +1,11 @@
 package locate
 
 import (
- 	"path/filepath"
-	"os"
-	"syscall"
-	"strings"
 	"bytes"
+	"path/filepath"
 	"regexp"
+	"strings"
+	"syscall"
 )
 
 func stripExtension(name string) string {
@@ -42,7 +41,7 @@ func bakeName(name string, options *Options) string {
 } */
 
 func nextCstr(b []byte) (cstr string, rest []byte) {
-	split := bytes.Split(b, []byte("\x00"), 2)
+	split := bytes.SplitN(b, []byte("\x00"), 2)
 	return string(split[0]), split[1]
 }
 
@@ -56,14 +55,13 @@ func escape(s string, echars string) string {
 	return s
 }
 
-func existing(f string) (exists, issym bool, err os.Error) {
+func existing(f string) (exists, issym bool, err error) {
 	var stat syscall.Stat_t
-	e := syscall.Lstat(f, &stat)
-	if e != 0 && e != syscall.ENOENT {
-		err = &os.PathError{"lstat", f, os.Errno(e)}
+	err = syscall.Lstat(f, &stat)
+	if err != nil && err != syscall.ENOENT {
 		return
 	}
-	exists = e != syscall.ENOENT
+	exists = err != syscall.ENOENT
 	issym = (stat.Mode & syscall.S_IFMT) == syscall.S_IFLNK
 	return
 }
@@ -71,21 +69,21 @@ func existing(f string) (exists, issym bool, err os.Error) {
 // Checks whether the file can be considered a match according to given options
 // Existing option requires the file to exist
 // Symlink option allows the file to be a symlink
-func fileOkay(f string, options *Options) (r bool, err os.Error) {
+func fileOkay(f string, options *Options) (bool, error) {
 	var stat syscall.Stat_t
-	e := syscall.Lstat(f, &stat)
+	err := syscall.Lstat(f, &stat)
 
-	if e != 0 && e != syscall.ENOENT {
-		return false, &os.PathError{"lstat", f, os.Errno(e)}
+	if err != nil && err != syscall.ENOENT {
+		return false, err
 	}
 
-	if options.Existing && (e == syscall.ENOENT) {
+	if options.Existing && (err == syscall.ENOENT) {
 		return false, nil
 	} // Drop dead files...
 
- 	if options.Accessable { // FIXME(salviati): No R_OK(=4) in syscall package!
-		e = syscall.Access(f, 4)
-		if e != 0 {
+	if options.Accessable { // FIXME(salviati): No R_OK(=4) in syscall package!
+		err = syscall.Access(f, 4)
+		if err != nil {
 			return false, nil
 		}
 	}
@@ -97,7 +95,7 @@ func fileOkay(f string, options *Options) (r bool, err os.Error) {
 	return true, nil
 }
 
-func matchOkay(f string, options *Options) (ok bool, err os.Error) {
+func matchOkay(f string, options *Options) (ok bool, err error) {
 
 	if !options.Existing && options.Symlink {
 		return true, nil //If everything's welcomed, no need to check

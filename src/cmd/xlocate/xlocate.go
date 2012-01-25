@@ -26,16 +26,16 @@ package main
 
 import (
 	"flag"
-	"os"
-	"log"
-	"symutils/locate"
-	"symutils/fuzzy"
 	"fmt"
-	"strings"
-	"path/filepath"
-	"http"
-	"template"
 	"io"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+	"symutils/fuzzy"
+	"symutils/locate"
+	"text/template"
 	"time"
 )
 
@@ -90,13 +90,15 @@ func init() {
 
 	if *levenshteinParams != "" {
 		n, err := fmt.Sscanf(*levenshteinParams, "%d,%d,%d,%d", &fuzzyThreshold, &fuzzyCost.Del, &fuzzyCost.Ins, &fuzzyCost.Subs)
-		if err != nil { log.Fatal(err) }
+		if err != nil {
+			log.Fatal(err)
+		}
 		if n != 4 {
 			vprintf(ERR, "Invalid number of fields for fuzzy search parameter.\n")
 		}
 	}
 
-	tpl = template.MustParse(*templateString + "\n", nil)
+	tpl = template.Must(template.New("result").Parse(*templateString+"\n"))
 
 	options := locate.Options{
 		IgnoreCase:           *ignoreCase,
@@ -113,57 +115,59 @@ func init() {
 		NWorkers:             *nworkers,
 	}
 
-	var err os.Error
-	t0 := time.Nanoseconds()
-	db, err = locate.NewDB(strings.Split(*dbFiles, ":", -1), &options)
-	t1 := time.Nanoseconds()
-	vprintln(LOG, "Loaded", *dbFiles, "in", float64(t1-t0)/1e9, "seconds")
-	if err != nil { log.Fatal(err) }
+	var err error
+	t0 := time.Now()
+	db, err = locate.NewDB(strings.Split(*dbFiles, ":"), &options)
+	t1 := time.Now()
+	vprintln(LOG, "Loaded", *dbFiles, "in", float64(t1.Sub(t0))/1e9, "seconds")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 type Config struct {
-	StripPath bool
-	CountEntries bool
-	DBFiles string
-	Existing bool
-	Follow bool
-	IgnoreCase bool
-	Limit uint
-	Accessable bool
+	StripPath         bool
+	CountEntries      bool
+	DBFiles           string
+	Existing          bool
+	Follow            bool
+	IgnoreCase        bool
+	Limit             uint
+	Accessable        bool
 	LevenshteinParams string
-	SearchMethod string
-	StripExtension bool
+	SearchMethod      string
+	StripExtension    bool
 	BasenameMustMatch bool
 	SymlinkCandidates bool
-	HttpAddr string
-	TemplateString string
+	HttpAddr          string
+	TemplateString    string
 }
 
 func printConfig(w io.Writer) {
-	t := template.MustParseFile("config.html", nil)
+	t := template.Must(template.ParseFiles("config.html"))
 	c := &Config{
-		StripPath: *stripPath,
-		CountEntries: *countEntries,
-		DBFiles: *dbFiles,
-		Existing: *existing,
-		Follow: *follow,
-		IgnoreCase: *ignoreCase,
-		Limit: *limit,
-		Accessable: *accessable,
+		StripPath:         *stripPath,
+		CountEntries:      *countEntries,
+		DBFiles:           *dbFiles,
+		Existing:          *existing,
+		Follow:            *follow,
+		IgnoreCase:        *ignoreCase,
+		Limit:             *limit,
+		Accessable:        *accessable,
 		LevenshteinParams: *levenshteinParams,
-		SearchMethod: *searchMethod,
-		StripExtension: *stripExtension,
+		SearchMethod:      *searchMethod,
+		StripExtension:    *stripExtension,
 		BasenameMustMatch: *basenameMustMatch,
 		SymlinkCandidates: *symlinkCandidates,
-		HttpAddr: *httpAddr,
-		TemplateString: *templateString,
+		HttpAddr:          *httpAddr,
+		TemplateString:    *templateString,
 	}
 	t.Execute(w, c)
 }
 
 type Match struct {
 	Base, Path string
-	N int
+	N          int
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -175,19 +179,24 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	nmatches := 0
-	for _, method := range strings.Split(*searchMethod, ",", -1) {
-		var err os.Error
+	for _, method := range strings.Split(*searchMethod, ",") {
+		var err error
 		ch := make(chan string)
 		go func() { err = locate.Locate(db, method, pattern, ch) }()
-		
+
 		for p := range ch {
 			nmatches++
 			m := &Match{Path: p, Base: filepath.Base(p), N: nmatches}
 			tpl.Execute(w, m)
 		}
 
-		if err != nil { fmt.Println(w, err); return }
-		if nmatches > 0 { break }
+		if err != nil {
+			fmt.Println(w, err)
+			return
+		}
+		if nmatches > 0 {
+			break
+		}
 	}
 }
 
@@ -208,17 +217,21 @@ func main() {
 	}
 
 	nmatches := 0
-	for _, method := range strings.Split(*searchMethod, ",", -1) {
-		var err os.Error
+	for _, method := range strings.Split(*searchMethod, ",") {
+		var err error
 		ch := make(chan string)
 		go func() { err = locate.Locate(db, method, flag.Arg(0), ch) }()
-		
+
 		for m := range ch {
 			nmatches++
 			fmt.Println(m)
 		}
 
-		if err != nil { log.Fatal(err) }
-		if nmatches > 0 { break }
+		if err != nil {
+			log.Fatal(err)
+		}
+		if nmatches > 0 {
+			break
+		}
 	}
 }

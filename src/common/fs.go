@@ -1,33 +1,34 @@
 package main
+
 /*
  * Various filesystem related functions used by the main program.
  * */
 
 import (
-	"syscall"
 	"os"
 	"path/filepath"
+	"syscall"
 )
 
 /* Check for existence of a file, without following a symlink */
 func fileExists(fname string) bool {
 	var stat syscall.Stat_t
-	e := syscall.Lstat(fname, &stat)
+	err := syscall.Lstat(fname, &stat)
 
-	if e == 0 {
+	if err == nil {
 		return true
 	}
-	if e == syscall.ENOENT {
+	if err == syscall.ENOENT {
 		return false
 	}
 
-	vprintf(WARN, "%v\n", os.PathError{"lstat", fname, os.Errno(e)})
+	vprintf(WARN, "%v\n", err)
 	return false
 }
 
 /* Checks whether the link is dead or not.
    Returns the alive state, link's target (if alive) and error. */
-func linkAlive(fname string, matchNames bool) (isAlive bool, dst string, err os.Error) {
+func linkAlive(fname string, matchNames bool) (isAlive bool, dst string, err error) {
 	dst, err = os.Readlink(fname)
 	if err != nil {
 		vprintf(INFO, "%v\n", err)
