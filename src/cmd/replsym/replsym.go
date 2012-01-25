@@ -91,7 +91,7 @@ func WalkFunc(path string, info os.FileInfo, err error) error {
 	}
 
 	if imatch(*pattern, oldtarget) {
-		vprintf(INFO, "%s -> %s matches the pattern %s", path, oldtarget, *pattern)
+		vprintf(INFO, "%s -> %s matches the pattern %s\n", path, oldtarget, *pattern)
 
 		if *target == "" {
 			fmt.Println(makeAbsolute(path, ""))

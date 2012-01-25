@@ -13,5 +13,8 @@ This one can became real handy if you're "tag"ging your files by means of [creat
 # Notes
 cmd/* needs revision in error/warning reporting.
 
+# Bugs
+Reports bugs to bug@freeconsole.org.
+
 # License
 Published under GPL3. See the file named LICENSE for details.

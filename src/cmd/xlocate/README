@@ -1,6 +1,6 @@
 If you want to run xlocate as a daemon to speed things up, but avoid using a
 web-browser, you can emulate ordinary locate's behavior this way.
-Start xlocate with -template "{Path}/{Base}" option, and use the following
+Start xlocate with -template "{{.Path}}/{{.Base}}" option, and use the following
 shell script to look up files
 
 xlocate.sh

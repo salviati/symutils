@@ -64,7 +64,7 @@ var basenameMustMatch = flag.Bool("B", false, "Basename must match (this's sligh
 var symlinkCandidates = flag.Bool("s", true, "List symlinks") //FIXME: What about S in GNU locate?
 var showVersion = flag.Bool("V", false, "Display version and licensing information, and quit.")
 var httpAddr = flag.String("http", "", "HTTP service address (eg. ':9188')")
-var templateString = flag.String("template", "{N}. <a href=\"file://{{Path}}\">{{Base}}</a><br>", "Template for HTTP results")
+var templateString = flag.String("template", "{N}. <a href=\"file://{{.Path}}\">{{.Base}}</a><br>", "Template for HTTP results")
 
 var db *locate.DB
 var tpl *template.Template
