@@ -33,12 +33,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	. "symutils/common"
 )
 
 const (
-	pkg, version, author, about, usage string = "cosym", VERSION, "Utkan Güngördü",
-		"cosym(1) looks for common symlinks under given directories",
-		"cosym [options] dir1 dir2 [dir3 ... dirN]"
+	pkg, version, author, about, usage string = "lssym", VERSION, "Utkan Güngördü",
+		"lssym(1) looks for common symlinks under given directories",
+		"lssym [options] dir1 dir2 [dir3 ... dirN]"
 )
 
 //var recurse = flag.Bool("r", false, "Recursive search") //FIXME: can mean "allow depth > 1"
@@ -60,7 +61,7 @@ var currentDir string
 
 func WalkFunc(path string, info os.FileInfo, err error) error  {
 	if err != nil {
-		vprintf(WARN, "%v\n", err)
+		Warnf("%v\n", err)
 		return err
 	}
 
@@ -77,9 +78,9 @@ func WalkFunc(path string, info os.FileInfo, err error) error  {
 
 	if issym {
 		if *checkSymlink {
-			ok, _, _ := linkAlive(path, false)
+			ok, _, _ := LinkAlive(path, false)
 			if !ok {
-				vprintf(INFO, "deadlink %v: %v\n", path, err)
+				Logf("deadlink %v: %v\n", path, err)
 				return nil
 			}
 		}
@@ -88,7 +89,7 @@ func WalkFunc(path string, info os.FileInfo, err error) error  {
 		path, err = os.Readlink(path)
 
 		if err != nil {
-			vprintf(INFO, "%v\n", err)
+			Logf("%v\n", err)
 			return nil
 		}
 	}
@@ -101,16 +102,16 @@ func WalkFunc(path string, info os.FileInfo, err error) error  {
 func walk(dname string) {
 	dir, err := os.Stat(dname)
 	if err != nil {
-		vprintf(ERR, "%v\n", err)
+		Errorf("%v\n", err)
 		return
 	}
 
 	if !dir.IsDir() {
-		vprintf(ERR, "%s is not a directory\n", dname)
+		Errorf("%s is not a directory\n", dname)
 	}
 
 	if err := filepath.Walk(dname, WalkFunc); err != nil {
-		vprintf(WARN, "%v\n", err)
+		Warnf("%v\n", err)
 	}
 }
 
@@ -118,16 +119,16 @@ func main() {
 	flag.Parse()
 
 	if *showVersion {
-		printVersion(pkg, version, author)
+		PrintVersion(pkg, version, author)
 		return
 	}
 	if *showHelp || flag.NArg() == 0 {
-		printHelp(pkg, version, about, usage)
+		PrintHelp(pkg, version, about, usage)
 		return
 	}
 
 	if flag.NArg() < 2 {
-		printHelp(pkg, version, about, usage)
+		PrintHelp(pkg, version, about, usage)
 		return
 	}
 

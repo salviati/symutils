@@ -37,6 +37,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	. "symutils/common"
 )
 
 var target = flag.String("t", "", "Replacement target for matched symlinks.")
@@ -70,7 +71,7 @@ func imatch(pattern, filename string) bool {
 
 func WalkFunc(path string, info os.FileInfo, err error) error {
 	if err != nil {
-		vprintf(ERR, "%v\n", err)
+		Errorf("%v\n", err)
 		return err
 	}
 
@@ -91,10 +92,10 @@ func WalkFunc(path string, info os.FileInfo, err error) error {
 	}
 
 	if imatch(*pattern, oldtarget) {
-		vprintf(INFO, "%s -> %s matches the pattern %s\n", path, oldtarget, *pattern)
+		Logf("%s -> %s matches the pattern %s\n", path, oldtarget, *pattern)
 
 		if *target == "" {
-			fmt.Println(makeAbsolute(path, ""))
+			fmt.Println(MakeAbsolute(path, ""))
 			return nil
 		}
 
@@ -105,7 +106,7 @@ func WalkFunc(path string, info os.FileInfo, err error) error {
 			newname = filepath.Join(dir, newname)
 		}
 
-		vprintf(INFO, "%s -> %s is being replaced by  %s -> %s\n", path, oldtarget, newname, *target)
+		Logf("%s -> %s is being replaced by  %s -> %s\n", path, oldtarget, newname, *target)
 
 		replace(newname, path, *target)
 	}
@@ -130,17 +131,17 @@ func init() {
 	flag.Parse()
 
 	if *showHelp {
-		printHelp(pkg, version, about, usage)
+		PrintHelp(pkg, version, about, usage)
 		os.Exit(0)
 	}
 
 	if *showVersion {
-		printVersion(pkg, version, author)
+		PrintVersion(pkg, version, author)
 		os.Exit(0)
 	}
 
 	if *pattern == "" {
-		printVersion(pkg, version, author)
+		PrintVersion(pkg, version, author)
 		os.Exit(0)
 	}
 
@@ -167,7 +168,7 @@ func init() {
 			return strings.Contains(filename, pattern)
 		}
 	default:
-		printVersion(pkg, version, author)
+		PrintVersion(pkg, version, author)
 		os.Exit(0)
 	}
 }

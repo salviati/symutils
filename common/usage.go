@@ -1,11 +1,11 @@
-package main
+package common
 
 import (
 	"fmt"
 	"flag"
 )
 
-func printVersion(pkg string, version string, author string) {
+func PrintVersion(pkg string, version string, author string) {
 	fmt.Println(pkg, version)
 	fmt.Println("Copyright (C) 2010, 2011", author)
 	fmt.Println("This program is free software; you may redistribute it under the terms of")
@@ -14,7 +14,7 @@ func printVersion(pkg string, version string, author string) {
 	fmt.Println("Report bugs to bug@freeconsole.org")
 }
 
-func printHelp(pkg string, version string, about string, usage string) {
+func PrintHelp(pkg string, version string, about string, usage string) {
 	fmt.Println(pkg, version, "\n")
 	fmt.Println(about)
 	fmt.Println("Usage:")

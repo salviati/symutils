@@ -22,7 +22,7 @@
 
 /*
   TODO(utkan):
-	* Revise log levels for vprintf() calls
+	* Revise log levels for Printf() calls
 	* Implement ignoreChars option
 */
 
@@ -45,6 +45,7 @@ import (
 	"strings"
 	"symutils/fuzzy"
 	"symutils/locate"
+	. "symutils/common"
 	"syscall"
 	"time"
 	"errors"
@@ -112,7 +113,7 @@ func relink(name, target string) error {
 	}
 
 	if target == newname {
-		vprintf(WARN, "Symlink shouldn't be pointing to itself!\n")
+		Warnf("Symlink shouldn't be pointing to itself!\n")
 		return ErrCircular
 	}
 
@@ -123,41 +124,41 @@ func relink(name, target string) error {
 
 	err := syscall.Unlink(name)
 	if err != nil {
-		vprintf(WARN, "%v\n", nil)
+		Warnf("%v\n", nil)
 		return nil
 	}
 
 	if target == "" {
-		vprintf(INFO, "unlinked %v\n", name)
+		Logf("unlinked %v\n", name)
 		deleted++
 		return nil
 	}
 
 	err = syscall.Symlink(target, newname)
 	if err != nil {
-		vprintf(WARN, "%v\n", err)
+		Warnf("%v\n", err)
 	}
-	vprintf(INFO, "created symlink: %v -> %v\n", newname, target)
+	Printf(LOG, "created symlink: %v -> %v\n", newname, target)
 	repaired++
 	return nil
 }
 
-// Filters a give file name.
-func filterResult(name string) bool {
-	vprintf(LOG, "Testing %s against filters", name)
+// Check filename against given filters.
+func filterResult(filename string) bool {
+	Logf("Testing %s against filters", filename)
 	for _, f := range filterIn {
-		if f.MatchString(name) == false {
+		if f.MatchString(filename) == false {
 			return false
 		}
 	}
 
 	for _, f := range filterOut {
-		if f.MatchString(name) == true {
+		if f.MatchString(filename) == true {
 			return false
 		}
 	}
 
-	vprintf(LOG, "%s successfully passed through all filters", name)
+	Logf("%s successfully passed through all filters", filename)
 	return true
 }
 
@@ -166,7 +167,7 @@ func mylocate(db *locate.DB, pattern string) (matches []string, err error) {
 		t0 := time.Now()
 		matches, err = locate.LocateAll(db, method, pattern)
 		t1 := time.Now()
-		vprintf(LOG, "locate %s using %s %.3f seconds-->\n", pattern, method, float64(t1.Sub(t0))/1e9)
+		Logf("locate %s using %s %.3f seconds-->\n", pattern, method, float64(t1.Sub(t0))/1e9)
 		if len(matches) > 0 {
 			return matches, err
 		}
@@ -176,14 +177,14 @@ func mylocate(db *locate.DB, pattern string) (matches []string, err error) {
 
 /* Fixes a given single symlink.
    Returns error code. */
-func symfix(filename string) error {
-	ok, dst, _ := linkAlive(filename, *matchNames)
+func symfix(path string) error {
+	ok, dst, _ := LinkAlive(path, *matchNames)
 	if ok {
-		vprintf(LOG, "%v -> %v\n", filename, dst)
+		Logf("%v -> %v\n", path, dst)
 		return nil
 	}
 
-	vprintf(INFO, "%v -> %v (broken)\n", filename, dst)
+	Logf("%v -> %v (broken)\n", path, dst)
 
 	// locate does not store trailing / for directories, so we gotta stip it off as well.
 	if dst[len(dst)-1] == '/' {
@@ -194,37 +195,37 @@ func symfix(filename string) error {
 	matches, err := mylocate(db, pattern)
 
 	if err != nil {
-		vprintf(ERR, "%v\n", err)
+		Errorf("%v\n", err)
 	}
 
 	for _, f := range matches {
-		vprintf(LOG, "Found candidate: %v\n", f)
+		Logf("Found candidate: %v\n", f)
 	}
 
 	if len(matches) == 0 {
-		vprintf(INFO, "No matches for: %v\n", filename)
+		Logf("No matches for: %v\n", path)
 	}
 
 	if len(matches) == 0 {
 		if *showSummary {
 			missingTargets[dst] = true
-			brokenLinks[filename] = dst
+			brokenLinks[path] = dst
 		}
 
 		dead++
 		if *deleteDeadLinks {
-			return relink(filename, "")
+			return relink(path, "")
 		}
 		return nil
 	}
 
 	if len(matches) == 1 {
-		return relink(filename, matches[0])
+		return relink(path, matches[0])
 	}
 
 	// we have more than 1 match
 	if *automatedMode {
-		vprintf(INFO, "Automated mode, skipping results\n")
+		Logf("Automated mode, skipping results\n")
 		skipped++
 		return nil
 	}
@@ -233,14 +234,14 @@ func symfix(filename string) error {
 	if choice == -1 {
 		return ErrUserCancel
 	} //user cancel
-	return relink(filename, matches[choice])
+	return relink(path, matches[choice])
 
 	return nil
 }
 
 func WalkFunc(path string, info os.FileInfo, err error) error {
 	if err != nil {
-		vprintf(WARN, "%v\n", err)
+		Warnf("%v\n", err)
 		return err
 	}
 
@@ -262,7 +263,7 @@ func WalkFunc(path string, info os.FileInfo, err error) error {
 func symfixr(filename string) {
 	_, err := os.Stat(filename)
 	if err != nil {
-		vprintf(WARN, "%v\n", err)
+		Warnf("%v\n", err)
 		return
 	}
 
@@ -276,15 +277,15 @@ func init() {
 	flag.Parse()
 
 	if *showVersion {
-		printVersion(pkg, version, author)
+		PrintVersion(pkg, version, author)
 		os.Exit(0)
 	}
 	if *showHelp || flag.NArg() == 0 {
-		printHelp(pkg, version, about, usage)
+		PrintHelp(pkg, version, about, usage)
 		os.Exit(0)
 	}
 
-	vprintf(INFO, "It's recommended that you update your database files by updatedb(8) prior to execution.\n")
+	Logf("It's recommended that you update your database files by updatedb(8) prior to execution.\n")
 
 	if *filter != "" {
 		filters := strings.Split(*filter, "\n")
@@ -309,7 +310,7 @@ func init() {
 			log.Fatal(err)
 		}
 		if n != 4 {
-			vprintf(ERR, "Invalid number of fields for fuzzy search parameter.\n")
+			Errorf("Invalid number of fields for fuzzy search parameter.\n")
 		}
 	}
 
@@ -328,11 +329,11 @@ func init() {
 	}
 
 	var err error
-	vprintf(INFO, "Reading databases...\n")
+	Logf("Reading databases...\n")
 	timeStart := time.Now()
 	db, err = locate.NewDB(filepath.SplitList(*dbPath), &options)
 	timeEnd := time.Now()
-	vprintf(INFO, "Done. Took %.2f seconds.\n", float64(timeEnd.Sub(timeStart))/1e9)
+	Logf("Done. Took %.2f seconds.\n", float64(timeEnd.Sub(timeStart))/1e9)
 	if err != nil {
 		log.Fatal(err)
 	}

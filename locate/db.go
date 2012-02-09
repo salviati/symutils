@@ -83,7 +83,7 @@ func setgid() error {
 		return err
 	}
 
-	gid := int(st.(*os.FileStat).Sys.(*syscall.Stat_t).Gid)
+	gid := int(st.Sys().(*syscall.Stat_t).Gid)
 
 	return syscall.Setgid(gid)
 }

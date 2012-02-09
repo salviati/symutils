@@ -37,6 +37,7 @@ import (
 	"symutils/locate"
 	"text/template"
 	"time"
+	. "symutils/common"
 )
 
 const (
@@ -64,7 +65,7 @@ var basenameMustMatch = flag.Bool("B", false, "Basename must match (this's sligh
 var symlinkCandidates = flag.Bool("s", true, "List symlinks") //FIXME: What about S in GNU locate?
 var showVersion = flag.Bool("V", false, "Display version and licensing information, and quit.")
 var httpAddr = flag.String("http", "", "HTTP service address (eg. ':9188')")
-var templateString = flag.String("template", "{{.N}}. <a href=\"file://{{.Path}}\">{{.Base}}</a><br>", "Template for HTTP results")
+var templateString = flag.String("template", `{{.N}}. <a href="file://{{.Path}}">{{.Base}}</a><br>`, "Template for HTTP results")
 
 var db *locate.DB
 var tpl *template.Template
@@ -81,7 +82,7 @@ func init() {
 	daemonMode := *httpAddr != ""
 
 	if *showHelp || (!daemonMode && flag.NArg() == 0) {
-		printHelp(pkg, version, about, usage)
+		PrintHelp(pkg, version, about, usage)
 		os.Exit(0)
 	}
 
@@ -94,7 +95,7 @@ func init() {
 			log.Fatal(err)
 		}
 		if n != 4 {
-			vprintf(ERR, "Invalid number of fields for fuzzy search parameter.\n")
+			Errorf("Invalid number of fields for fuzzy search parameter.\n")
 		}
 	}
 
@@ -119,7 +120,7 @@ func init() {
 	t0 := time.Now()
 	db, err = locate.NewDB(strings.Split(*dbFiles, ":"), &options)
 	t1 := time.Now()
-	vprintln(LOG, "Loaded", *dbFiles, "in", float64(t1.Sub(t0))/1e9, "seconds")
+	Logln("Loaded", *dbFiles, "in", float64(t1.Sub(t0))/1e9, "seconds")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -214,7 +215,7 @@ func main() {
 	}
 
 	if flag.NArg() == 0 {
-		printHelp(pkg, version, about, usage)
+		PrintHelp(pkg, version, about, usage)
 		os.Exit(0)
 	}
 
