@@ -152,7 +152,7 @@ func main() {
 	Logln(len(dups), "files don't have unique names")
 
 	for _, paths := range dups {
-		if matchSize == false {
+		if *matchSize == false {
 			handleDups(paths)
 			continue
 		}
