@@ -10,6 +10,8 @@ This one can became real handy if you're "tag"ging your files by means of [creat
 
 `xlocate(1)` is an alternative to locate. Common options are (mostly) compatible with GNU locate.
 
+`dups(1)` finds duplicate files with the same name, using a locate database. Can remove the dups, or convert them to links pointing to a chosen "origin" file.
+
 # Notes
 cmd/* needs revision in error/warning reporting.
 

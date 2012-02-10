@@ -1,4 +1,4 @@
-// dups(1) Find duplicate files with the same name, using a locate database.
+// dups(1) Find duplicate files with the same name, using a locate database. Can remove the dups, or convert them to links pointing to a chosen "origin" file.
 package main
 
 import (
@@ -15,7 +15,7 @@ const (
 	DBFILES = "/var/lib/mlocate/mlocate.db"
 )
 // TODO(utkan): Ignore pattern and extension.
-var dbFiles = flag.String("d", DBFILES, "List of : separated database files. xlocate will try to determine the format automatically.")
+var dbFiles = flag.String("d", DBFILES, "List of : separated database files. dups will try to determine the format automatically.")
 var existing = flag.Bool("e", false, "List only existing files.")
 var ignoreCase = flag.Bool("i", false, "Ignore case.")
 var accessable = flag.Bool("a", true, "List only (read-)accessable files (disabling this option requires RO access to all given DB files)")
@@ -34,8 +34,8 @@ var action = flag.String("action", "none", "What to do with duplicates? Valid ch
 var db *locate.DB
 
 const (
-	pkg, version, author, about, usage string = "xlocate", VERSION, "Utkan Güngördü",
-		"dups(1) Find duplicate files with the same name, using a locate database.",
+	pkg, version, author, about, usage string = "dups", VERSION, "Utkan Güngördü",
+		"dups(1) Find duplicate files with the same name, using a locate database. Can remove the dups, or convert them to links pointing to a chosen \"origin\" file.",
 		"dups [options]"
 )
 
@@ -91,7 +91,7 @@ func init() {
 
 
 func rm(path string) error {
-	if okay("Really unlink the file?: %s", path) {
+	if okay("Really remove the file?: %s", path) {
 		return os.Remove(path)
 	}
 	Logln("Removed file: ", path)
@@ -137,7 +137,7 @@ func handleDups(paths []string) {
 
 func main() {
 	dups := db.Duplicates() 
-	Logln(len(dups), "files share the same name")
+	Logln(len(dups), "files don't have unique names")
 
 	for _, paths := range dups {
 		
