@@ -14,13 +14,16 @@ import (
 	"syscall"
 )
 
+// A list paths, indexed by a string.
+type PathList map[string][]string
+
 // Represents a database file.
 type DB struct {
 	dbFilenames []string // Databases
 	files       []string // Union of files listed in db files
 	options     Options
 
-	basenames  map[string][]string // A map of file basenames -> path of files with that basename
+	basenames  PathList // A map of file basenames -> path of files with that basename
 	hasmapLock sync.Mutex
 }
 
@@ -28,7 +31,7 @@ func (db *DB) bakeBasenames() error {
 	db.hasmapLock.Lock()
 	defer db.hasmapLock.Unlock()
 
-	db.basenames = make(map[string][]string)
+	db.basenames = make(PathList)
 	for _, f := range db.files {
 		base := filepath.Base(f)
 		ix := bakeName(base, &db.options)
@@ -199,16 +202,16 @@ func NewDB(dbFilenames []string, options *Options) (db *DB, err error) {
 	}
 
 	if db.options.HashMap {
-		/* err = db.bakeBasenames()
+		err = db.bakeBasenames()
 		if err != nil {
 			return db, err
-		} */
-		go func() {
+		}
+		/*go func() {
 			err = db.bakeBasenames()
 			if err != nil {
 				db.options.HashMap = false
 			}
-		}()
+		}()*/
 	}
 
 	return db, nil

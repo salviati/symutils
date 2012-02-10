@@ -1,0 +1,173 @@
+// dups(1) Find duplicate files with the same name, using a locate database.
+package main
+
+import (
+	"flag"
+	"strings"
+	"fmt"
+	"os"
+	"log"
+	"symutils/locate"
+	. "symutils/common"
+)
+
+const (
+	DBFILES = "/var/lib/mlocate/mlocate.db"
+)
+// TODO(utkan): Ignore pattern and extension.
+var dbFiles = flag.String("d", DBFILES, "List of : separated database files. xlocate will try to determine the format automatically.")
+var existing = flag.Bool("e", false, "List only existing files.")
+var ignoreCase = flag.Bool("i", false, "Ignore case.")
+var accessable = flag.Bool("a", true, "List only (read-)accessable files (disabling this option requires RO access to all given DB files)")
+var nworkers = flag.Uint("nworkers", 1, "The number of parallel workers searching in one database")
+
+var _minSize = flag.Uint64("min", 0, "Set the minumum file size (see the unit option), smaller files will be discarded.")
+// var ncompare = flag.Uint("n", 0, "Compare first n bytes before declaring files identical")
+
+var showVersion = flag.Bool("V", false, "Display version and licensing information, and quit.")
+var showHelp = flag.Bool("h", false, "Display help and quit")
+
+var unit = flag.String("unit", "B", "B for bytes, K for KiB, M for MiB, G for GiB, T for TiB")
+var yesToAll = flag.Bool("Y", false, "Assume yes to all y/n questions (they appear before making changes in the filesystem)")
+var action = flag.String("action", "none", "What to do with duplicates? Valid choices are none (nothing), rm (remove), ln (link back to origin).")
+
+var db *locate.DB
+
+const (
+	pkg, version, author, about, usage string = "xlocate", VERSION, "Utkan Güngördü",
+		"dups(1) Find duplicate files with the same name, using a locate database.",
+		"dups [options]"
+)
+
+type filesize int64
+
+func (n filesize) String() string {
+	return fmt.Sprint(int64(n) / multiplier)
+}
+
+var (
+	multiplier = int64(1)
+	minSize = filesize(0)
+)
+
+func okay(format string, va ...interface{}) bool {
+	if *yesToAll { return true }
+	return Queryf(format, va...)
+}
+
+func init() {
+	flag.Parse()
+
+	if *showHelp {
+		PrintHelp(pkg, version, about, usage)
+		os.Exit(0)
+	}
+	
+	mulmap := map[string]int64 { "B": 1, "K": 1024, "M": 1024*1024, "G": 1024*1024*1024, "T": 1024*1024*1024*1024 }
+	
+	var ok bool
+	if multiplier, ok = mulmap[*unit]; !ok {
+		log.Fatal("Invalid unit", *unit)
+	}
+	minSize = filesize(int64(*_minSize) * multiplier)
+
+	options := locate.Options{
+		IgnoreCase:           *ignoreCase,
+		Basename:             false,
+		StripPath:            false,
+		Existing:             *existing, // We handle this manually, after getting the list of matches.
+		Accessable:           *accessable,
+		Symlink:              false,
+		HashMap:              true,
+		NWorkers:             *nworkers,
+	}
+	
+	var err error
+	db, err = locate.NewDB(strings.Split(*dbFiles, ":"), &options)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+
+func rm(path string) error {
+	if okay("Really unlink the file?: %s", path) {
+		return os.Remove(path)
+	}
+	Logln("Removed file: ", path)
+	return nil
+}
+
+func rmAndLink(path, newtarget string) error {
+	if err := rm(path); err != nil {
+		return err
+	}
+	
+	if okay("Okay to create the symlink?: %s -> %s", path, newtarget) {
+		return os.Symlink(newtarget, path)
+	}
+	return nil
+}
+
+func handleDups(paths []string) {
+	if len(paths) < 2 { return }
+	fmt.Println()
+	orig, cancel := Choose("Which of these should be considered as the origin?", paths)
+	if cancel { return }
+	
+	switch *action {
+	case "rm":
+		for i := 0; i<len(paths); i++ {
+			if i==orig { continue }
+			if err := rm(paths[i]); err != nil {
+				Warnln(err)
+			}
+		}
+	case "ln":
+		for i := 0; i<len(paths); i++ {
+			if i==orig { continue }
+			if err := rmAndLink(paths[i], paths[orig]); err != nil {
+				Warnln(err)
+			}
+		}
+	default:
+		
+	}
+}
+
+func main() {
+	dups := db.Duplicates() 
+	Logln(len(dups), "files share the same name")
+
+	for _, paths := range dups {
+		
+		sizelist := make(map[int64][]string)
+		// FIXME(utkan): Use db.LocateHashMap(path) to do the job.
+		for _, path := range paths {
+			fi, err := os.Lstat(path)
+			if err != nil { Warnf(path,":",err); continue }
+			if fi.Mode() & os.ModeType != 0 {
+				continue
+			}
+			
+			size := fi.Size()
+			
+			if size < int64(minSize) { continue }
+			
+			if _, ok := sizelist[size]; !ok {
+				sizelist[size] = make([]string,0)
+			}	
+			sizelist[size] = append(sizelist[size], path)
+		}
+		
+		for size, paths := range sizelist {
+			if len(paths) <= 1 { continue }
+			
+			for _, path := range paths {
+				fmt.Println("[", size,"B,",filesize(size), *unit,"]", path)
+			}
+
+			handleDups(paths)
+		}
+	}
+}

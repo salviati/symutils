@@ -46,7 +46,6 @@ import (
 	"symutils/fuzzy"
 	"symutils/locate"
 	. "symutils/common"
-	"syscall"
 	"time"
 	"errors"
 )
@@ -101,6 +100,11 @@ const (
 		"symfix [options] file1/dir1 [file2/path2 ...]"
 )
 
+func okay(format string, va ...interface{}) bool {
+	if *yesToAll { return true }
+	return Queryf(format, va...)
+}
+
 /* Unlinks the file name. If the target is not an empty string,
    also creates the symlink name (or if renameSymlink option is
    used, filepath.Base(target)) pointing to it.
@@ -117,12 +121,12 @@ func relink(name, target string) error {
 		return ErrCircular
 	}
 
-	if (target == "" && false == ynQuestion("Really unlink the file?: %s", name)) ||
-		false == ynQuestion("Really relink the file?: %s -> %s", newname, target) {
+	if (target == "" && false == okay("Really unlink the file?: %s", name)) ||
+		false == okay("Really relink the file?: %s -> %s", newname, target) {
 		return ErrUserCancel
 	}
 
-	err := syscall.Unlink(name)
+	err := os.Remove(name)
 	if err != nil {
 		Warnf("%v\n", nil)
 		return nil
@@ -134,7 +138,7 @@ func relink(name, target string) error {
 		return nil
 	}
 
-	err = syscall.Symlink(target, newname)
+	err = os.Symlink(target, newname)
 	if err != nil {
 		Warnf("%v\n", err)
 	}
@@ -230,8 +234,8 @@ func symfix(path string) error {
 		return nil
 	}
 
-	choice := getInteractiveChoice(matches)
-	if choice == -1 {
+	choice, cancel := Choose("Which one seems to be the correct target?", matches)
+	if cancel {
 		return ErrUserCancel
 	} //user cancel
 	return relink(path, matches[choice])

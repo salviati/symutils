@@ -1,4 +1,4 @@
-package main
+package common
 
 import (
 	"fmt"
@@ -8,11 +8,7 @@ import (
 )
 
 /* Presents a yes/no question. Returns 1 if yes, 0 otherwise. */
-func ynQuestion(format string, va ...interface{}) bool {
-	if *yesToAll {
-		return true
-	}
-
+func Queryf(format string, va ...interface{}) bool {
 	for {
 		fmt.Fprintf(os.Stderr, format, va...)
 		fmt.Fprintf(os.Stderr, " (y/n): ")
@@ -38,17 +34,18 @@ func ynQuestion(format string, va ...interface{}) bool {
 /* Presents the possible targets and reads the user choice until we have a valid choice
    or user explicitly cancels.
    Returns -1 if user cancels, target index otherwise. */
-func getInteractiveChoice(sl []string) (choice int) {
+func Choose(query string, sl []string) (choice int, cancel bool) {
 	for i, s := range sl {
 		fmt.Fprintf(os.Stderr, "[%d] %s\n", i, s)
 	}
 
 	for {
-		fmt.Fprintf(os.Stderr, "* Which one seems to be the correct target? (leave blank to skip) [range %d-%d]: ", 0, len(sl)-1)
+		fmt.Fprintf(os.Stderr, "* " + query  +" (leave blank to skip) [range %d-%d]: ", 0, len(sl)-1)
 		choice = 0
 		_, err := fmt.Scanf("%d", &choice)
 		if err != nil {
-			return -1
+			cancel = true
+			return
 		}
 
 		if err == nil && choice >= 0 && choice < len(sl) {
