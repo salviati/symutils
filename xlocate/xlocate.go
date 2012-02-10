@@ -33,11 +33,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	. "symutils/common"
 	"symutils/fuzzy"
 	"symutils/locate"
 	"text/template"
 	"time"
-	. "symutils/common"
 )
 
 const (
@@ -99,7 +99,7 @@ func init() {
 		}
 	}
 
-	tpl = template.Must(template.New("result").Parse(*templateString+"\n"))
+	tpl = template.Must(template.New("result").Parse(*templateString + "\n"))
 
 	options := locate.Options{
 		IgnoreCase:           *ignoreCase,

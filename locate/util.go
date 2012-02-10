@@ -2,11 +2,11 @@ package locate
 
 import (
 	"bytes"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"syscall"
-	"os"
 )
 
 func stripExtension(name string) string {
@@ -62,7 +62,7 @@ func existing(f string) (exists, issym bool, err error) {
 		return
 	}
 	exists = err != os.ENOENT
-	issym = fi.Mode() & os.ModeSymlink != 0
+	issym = fi.Mode()&os.ModeSymlink != 0
 	return
 }
 
@@ -87,7 +87,7 @@ func fileOkay(f string, options *Options) (bool, error) {
 		}
 	}
 
-	issym := fi.Mode() & os.ModeSymlink != 0
+	issym := fi.Mode()&os.ModeSymlink != 0
 	if options.Symlink == false && issym {
 		return false, nil
 	} // ...and symlinks, if necessary.

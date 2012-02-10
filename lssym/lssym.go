@@ -58,8 +58,7 @@ var nametabs []nametab_t
 var curNametab nametab_t
 var currentDir string
 
-
-func WalkFunc(path string, info os.FileInfo, err error) error  {
+func WalkFunc(path string, info os.FileInfo, err error) error {
 	if err != nil {
 		Warnf("%v\n", err)
 		return err
@@ -71,7 +70,7 @@ func WalkFunc(path string, info os.FileInfo, err error) error  {
 		return nil
 	}
 
-	issym := info.Mode() & os.ModeSymlink != 0
+	issym := info.Mode()&os.ModeSymlink != 0
 	if !issym && !*includeOrdinaryFiles {
 		return nil
 	}

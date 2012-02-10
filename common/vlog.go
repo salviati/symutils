@@ -1,8 +1,8 @@
 package common
 
 import (
-	"os"
 	"fmt"
+	"os"
 )
 
 type LogLevelType int
@@ -10,22 +10,24 @@ type LogLevelType int
 var (
 	ShowLogLevel = true
 	ErrorsFatal  = true
-	LogLevel = LogLevelType(0)
+	LogLevel     = LogLevelType(0)
 )
 
 var (
-	levelString = []string{"[ERR] ", "[WRN] ", "[LOG] "}
-	unknownLevel  = "[???] "
+	levelString  = []string{"[ERR] ", "[WRN] ", "[LOG] "}
+	unknownLevel = "[???] "
 )
 
 func (l LogLevelType) String() string {
-	if l<0 || int(l)>= len(levelString) { return unknownLevel }
+	if l < 0 || int(l) >= len(levelString) {
+		return unknownLevel
+	}
 	s := levelString[l]
 	return s
 }
 
 const ( //FIXME imp. a type w/ String() instead
-	ERR  = iota
+	ERR = iota
 	WARN
 	LOG
 )
@@ -34,25 +36,43 @@ const ( //FIXME imp. a type w/ String() instead
  * Prints out given message on a given level (with proper suffix if ShowLogLevel is set)
  * If level is ERR, exits the program with error code 1. */
 func Printf(level LogLevelType, format string, a ...interface{}) {
-	if level == ERR && ErrorsFatal { defer os.Exit(1) }
-	if LogLevel < level { return }
-	if ShowLogLevel { fmt.Fprint(os.Stderr, level) }
+	if level == ERR && ErrorsFatal {
+		defer os.Exit(1)
+	}
+	if LogLevel < level {
+		return
+	}
+	if ShowLogLevel {
+		fmt.Fprint(os.Stderr, level)
+	}
 
 	fmt.Fprintf(os.Stderr, format, a...)
 }
 
 func Print(level LogLevelType, a ...interface{}) {
-	if level == ERR && ErrorsFatal { defer os.Exit(1) }
-	if LogLevel < level { return }
-	if ShowLogLevel { fmt.Fprint(os.Stderr, level) }
+	if level == ERR && ErrorsFatal {
+		defer os.Exit(1)
+	}
+	if LogLevel < level {
+		return
+	}
+	if ShowLogLevel {
+		fmt.Fprint(os.Stderr, level)
+	}
 
 	fmt.Fprint(os.Stderr, a...)
 }
 
 func Println(level LogLevelType, a ...interface{}) {
-	if level == ERR && ErrorsFatal { defer os.Exit(1) }
-	if LogLevel < level { return }
-	if ShowLogLevel { fmt.Fprint(os.Stderr, level) }
+	if level == ERR && ErrorsFatal {
+		defer os.Exit(1)
+	}
+	if LogLevel < level {
+		return
+	}
+	if ShowLogLevel {
+		fmt.Fprint(os.Stderr, level)
+	}
 
 	fmt.Fprintln(os.Stderr, a...)
 }

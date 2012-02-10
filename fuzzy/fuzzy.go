@@ -39,7 +39,6 @@ type LevenshteinCost struct {
 	Del, Ins, Subs int
 }
 
-
 // LevenshteinDistance makes a fuzzy search, using Levenshtein distance as a measure,
 // for needle in haystack.
 // Runs at O(m*n), when m and n are length of needle and haystack.

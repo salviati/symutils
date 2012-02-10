@@ -36,6 +36,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -43,11 +44,10 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	. "symutils/common"
 	"symutils/fuzzy"
 	"symutils/locate"
-	. "symutils/common"
 	"time"
-	"errors"
 )
 
 const (
@@ -101,7 +101,9 @@ const (
 )
 
 func okay(format string, va ...interface{}) bool {
-	if *yesToAll { return true }
+	if *yesToAll {
+		return true
+	}
 	return Queryf(format, va...)
 }
 
@@ -250,11 +252,13 @@ func WalkFunc(path string, info os.FileInfo, err error) error {
 	}
 
 	if info.IsDir() {
-		if *recurse == false { return filepath.SkipDir }
+		if *recurse == false {
+			return filepath.SkipDir
+		}
 		return nil
 	}
 
-	if info.Mode() & os.ModeSymlink != 0 {
+	if info.Mode()&os.ModeSymlink != 0 {
 		if err := symfix(path); err == ErrUserCancel {
 			skipped++
 		}

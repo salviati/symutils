@@ -1,8 +1,8 @@
 package common
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 )
 
 func PrintVersion(pkg string, version string, author string) {

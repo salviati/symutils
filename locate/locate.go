@@ -25,8 +25,8 @@ package locate
 
 import (
 	"errors"
-	"regexp"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"symutils/fuzzy"
 )

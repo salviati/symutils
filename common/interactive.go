@@ -2,8 +2,8 @@ package common
 
 import (
 	"fmt"
-	"os"
 	"log"
+	"os"
 	"strings"
 )
 
@@ -40,7 +40,7 @@ func Choose(query string, sl []string) (choice int, cancel bool) {
 	}
 
 	for {
-		fmt.Fprintf(os.Stderr, "* " + query  +" (leave blank to skip) [range %d-%d]: ", 0, len(sl)-1)
+		fmt.Fprintf(os.Stderr, "* "+query+" (leave blank to skip) [range %d-%d]: ", 0, len(sl)-1)
 		choice = 0
 		_, err := fmt.Scanf("%d", &choice)
 		if err != nil {

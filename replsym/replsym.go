@@ -76,11 +76,13 @@ func WalkFunc(path string, info os.FileInfo, err error) error {
 	}
 
 	if info.IsDir() {
-		if *recurse == false { return filepath.SkipDir }
+		if *recurse == false {
+			return filepath.SkipDir
+		}
 		return nil
 	}
 
-	issym := info.Mode() & os.ModeSymlink != 0
+	issym := info.Mode()&os.ModeSymlink != 0
 
 	if !issym {
 		return nil
