@@ -12,6 +12,11 @@ This one can became real handy if you're "tag"ging your files by means of [creat
 
 `dups(1)` finds duplicate files with the same name, using a locate database. Can remove the dups, or convert them to links pointing to a chosen "origin" file.
 
+# Installation
+You can install the tools using the go command. To install symfix for example, you can run
+
+`go get github.com/salviati/symutils/symfix`
+
 # Notes
 cmd/* needs revision in error/warning reporting.
 
