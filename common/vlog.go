@@ -32,6 +32,11 @@ const ( //FIXME imp. a type w/ String() instead
 	LOG
 )
 
+const (
+	LogLevelMin = 0
+	LogLevelMax = 2
+)
+
 /* Verbose print function.
  * Prints out given message on a given level (with proper suffix if ShowLogLevel is set)
  * If level is ERR, exits the program with error code 1. */

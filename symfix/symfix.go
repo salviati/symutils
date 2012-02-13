@@ -74,6 +74,7 @@ var matchNames = flag.Bool("names", false, "Consider symlinks with a name that d
 var showSummary = flag.Bool("summary", false, "Show a summary with misc info")
 var ignoreChars = flag.String("ignore", "", "Ignore the given set of characters in file names")
 var filter = flag.String("filter", "", `Filter search results using regexp.MatchString. Separate filters with a newline (\n). If the first character of the filter is !, those that match with the regexp are _not_ listed.`)
+var verbose = flag.Uint("v", 0, "Verbosity 0: errors only, 1: errors and warnings, 2: errors, warning, log")
 
 var searchMethod = flag.String("m", "hashmap",
 	"Comma separated list of search methods: hashmap (exact matches [except for -x and -i options], very fast. Requires a hash-map initialization on first usage.), substring (using strings.Contains), wildcard (using path.Match), regexp, levenshtein (fuzzy search, see -levenshtein option as well). Search will be repeated using the next method if the current method gives 0 hits.")
@@ -294,6 +295,12 @@ func init() {
 	}
 
 	Logf("It's recommended that you update your database files by updatedb(8) prior to execution.\n")
+	
+	if *verbose < LogLevelMin || *verbose > LogLevelMax {
+		log.Fatal("Verbosity parameter should be between", LogLevelMin, "and", LogLevelMax)
+	}
+	
+	LogLevel = LogLevelType(int(*verbose))
 
 	if *filter != "" {
 		filters := strings.Split(*filter, "\n")

@@ -57,11 +57,11 @@ func escape(s string, echars string) string {
 }
 
 func existing(f string) (exists, issym bool, err error) {
-	fi, err := os.Lstat(f)
+	fi, err := syscall.Lstat(f)
 	if err != nil && err != syscall.ENOENT {
 		return
 	}
-	exists = err != os.ENOENT
+	exists = err != syscall.ENOENT
 	issym = fi.Mode()&os.ModeSymlink != 0
 	return
 }
@@ -70,13 +70,13 @@ func existing(f string) (exists, issym bool, err error) {
 // Existing option requires the file to exist
 // Symlink option allows the file to be a symlink
 func fileOkay(f string, options *Options) (bool, error) {
-	fi, err := os.Lstat(f)
+	fi, err := syscall.Lstat(f)
 
-	if err != nil && err != os.ENOENT {
+	if err != nil && err != syscall.ENOENT {
 		return false, err
 	}
 
-	if options.Existing && (err == os.ENOENT) {
+	if options.Existing && (err == syscall.ENOENT) {
 		return false, nil
 	} // Drop dead files...
 
