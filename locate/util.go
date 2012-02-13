@@ -56,21 +56,23 @@ func escape(s string, echars string) string {
 	return s
 }
 
-func existing(f string) (exists, issym bool, err error) {
-	fi, err := syscall.Lstat(f)
+func existing(path string) (exists, issym bool, err error) {
+	var fi syscall.Stat_t
+	err = syscall.Lstat(path, &fi)
 	if err != nil && err != syscall.ENOENT {
 		return
 	}
 	exists = err != syscall.ENOENT
-	issym = fi.Mode()&os.ModeSymlink != 0
+	issym = os.FileMode(fi.Mode)&os.ModeSymlink != 0
 	return
 }
 
 // Checks whether the file can be considered a match according to given options
 // Existing option requires the file to exist
 // Symlink option allows the file to be a symlink
-func fileOkay(f string, options *Options) (bool, error) {
-	fi, err := syscall.Lstat(f)
+func fileOkay(path string, options *Options) (bool, error) {
+	var fi syscall.Stat_t
+	err := syscall.Lstat(path, &fi)
 
 	if err != nil && err != syscall.ENOENT {
 		return false, err
@@ -81,13 +83,13 @@ func fileOkay(f string, options *Options) (bool, error) {
 	} // Drop dead files...
 
 	if options.Accessable { // FIXME(utkan): No R_OK(=4) in syscall package!
-		err = syscall.Access(f, 4)
+		err = syscall.Access(path, 4)
 		if err != nil {
 			return false, nil
 		}
 	}
 
-	issym := fi.Mode()&os.ModeSymlink != 0
+	issym := os.FileMode(fi.Mode)&os.ModeSymlink != 0
 	if options.Symlink == false && issym {
 		return false, nil
 	} // ...and symlinks, if necessary.
