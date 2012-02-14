@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"sync"
 	"syscall"
-	"log"
 )
 
 // A list paths, indexed by a string.
@@ -156,8 +155,6 @@ func (db *DB) readMlocateDB(fb []byte) (nametab []string, e error) {
 	// ok becomes true when we reached the requested db.option.Root directory,
 	// and we start adding files so forth.
 	alwaysOk := filepath.HasPrefix(rootpath, db.options.Root)
-	log.Println("alw", alwaysOk)
-	log.Println("rootpath",rootpath)
 	for ok := false; ; {
 		var name string
 		name, rem = nextCstr(rem)
@@ -166,7 +163,6 @@ func (db *DB) readMlocateDB(fb []byte) (nametab []string, e error) {
 				ok = filepath.HasPrefix(name, db.options.Root) // FIXME(utkan): This is too inefficient.
 			}
 			curDir = name
-			log.Println(curDir)
 			dirNameNow = false
 			if alwaysOk || ok {
 				nametab = append(nametab, curDir)
