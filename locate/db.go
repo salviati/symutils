@@ -165,9 +165,6 @@ func (db *DB) readMlocateDB(fb []byte) (nametab []string, e error) {
 			}
 			curDir = name
 			dirNameNow = false
-			if alwaysOk || ok {
-				nametab = append(nametab, curDir)
-			}
 		} else {
 			if alwaysOk || ok {
 				nametab = append(nametab, curDir+"/"+name)
