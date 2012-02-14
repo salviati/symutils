@@ -290,6 +290,8 @@ func init() {
 
 	flag.Parse()
 
+	SetLogLevel(*verbose)
+
 	if *showVersion {
 		PrintVersion(pkg, version, author)
 		os.Exit(0)
@@ -300,12 +302,6 @@ func init() {
 	}
 
 	Logf("It's recommended that you update your database files by updatedb(8) prior to execution.\n")
-
-	if *verbose < LogLevelMin || *verbose > LogLevelMax {
-		log.Fatal("Verbosity parameter should be between", LogLevelMin, "and", LogLevelMax)
-	}
-
-	LogLevel = LogLevelType(int(*verbose))
 
 	if *filter != "" {
 		filters := strings.Split(*filter, "\n")

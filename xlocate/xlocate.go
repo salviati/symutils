@@ -68,6 +68,8 @@ var (
 	showVersion       = flag.Bool("V", false, "Display version and licensing information, and quit.")
 	httpAddr          = flag.String("http", "", "HTTP service address (eg. ':9188')")
 	templateString    = flag.String("template", `{{.N}}. <a href="file://{{.Path}}">{{.Base}}</a><br>`, "Template for HTTP results")
+
+	verbose = flag.Uint("v", 0, "Verbosity 0: errors only, 1: errors and warnings, 2: errors, warning, log")
 )
 
 var (
@@ -83,6 +85,8 @@ const (
 
 func init() {
 	flag.Parse()
+
+	SetLogLevel(*verbose)
 
 	daemonMode := *httpAddr != ""
 

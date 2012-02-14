@@ -35,8 +35,8 @@ var (
 	unit     = flag.String("unit", "B", "B for bytes, K for KiB, M for MiB, G for GiB, T for TiB")
 	yesToAll = flag.Bool("Y", false, "Assume yes to all y/n questions (they appear before making changes in the filesystem)")
 	action   = flag.String("action", "none", "What to do with duplicates? Valid choices are none (nothing), rm (remove), ln (link back to origin).")
-	
-	verbose  = flag.Uint("v", 0, "Verbosity 0: errors only, 1: errors and warnings, 2: errors, warning, log")
+
+	verbose = flag.Uint("v", 0, "Verbosity 0: errors only, 1: errors and warnings, 2: errors, warning, log")
 )
 
 var db *locate.DB
@@ -68,15 +68,12 @@ func okay(format string, va ...interface{}) bool {
 func init() {
 	flag.Parse()
 
+	SetLogLevel(*verbose)
+
 	if *showHelp {
 		PrintHelp(pkg, version, about, usage)
 		os.Exit(0)
 	}
-	
-	if *verbose < LogLevelMin || *verbose > LogLevelMax {
-		log.Fatal("Verbosity parameter should be between", LogLevelMin, "and", LogLevelMax)
-	}
-	LogLevel = LogLevelType(int(*verbose))
 
 	mulmap := map[string]int64{"B": 1, "K": 1024, "M": 1024 * 1024, "G": 1024 * 1024 * 1024, "T": 1024 * 1024 * 1024 * 1024}
 

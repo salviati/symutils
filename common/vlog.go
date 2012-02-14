@@ -37,6 +37,13 @@ const (
 	LogLevelMax = 2
 )
 
+func SetLogLevel(l uint) {
+	if l > LogLevelMax {
+		l = LogLevelMax
+	}
+	LogLevel = LogLevelType(int(l))
+}
+
 /* Verbose print function.
  * Prints out given message on a given level (with proper suffix if ShowLogLevel is set)
  * If level is ERR, exits the program with error code 1. */

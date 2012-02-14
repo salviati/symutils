@@ -52,6 +52,8 @@ var (
 	nmatchMin            = flag.Int("N", 0, "Minimum number of identical symlinks (in different dirs) to be enlisted. (0 means # of given directories.)")
 	includeOrdinaryFiles = flag.Bool("o", false, "Do not discard ordinary files")
 	checkSymlink         = flag.Bool("c", false, "Check symlinks before enlisting")
+
+	verbose = flag.Uint("v", 0, "Verbosity 0: errors only, 1: errors and warnings, 2: errors, warning, log")
 )
 
 type nametab_t map[string]int
@@ -118,8 +120,10 @@ func walk(dname string) {
 	}
 }
 
-func main() {
+func init() {
 	flag.Parse()
+
+	SetLogLevel(*verbose)
 
 	if *showVersion {
 		PrintVersion(pkg, version, author)
@@ -134,7 +138,9 @@ func main() {
 		PrintHelp(pkg, version, about, usage)
 		return
 	}
+}
 
+func main() {
 	nametabs := make([]nametab_t, flag.NArg())
 
 	for i := 0; i < flag.NArg(); i++ {

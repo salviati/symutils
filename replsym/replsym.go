@@ -49,6 +49,8 @@ var (
 	rename          = flag.Bool("R", false, "Rename symlinks as target's basename")
 	showVersion     = flag.Bool("V", false, "Show version and license info and quit")
 	showHelp        = flag.Bool("h", false, "Display help and quit")
+
+	verbose = flag.Uint("v", 0, "Verbosity 0: errors only, 1: errors and warnings, 2: errors, warning, log")
 )
 
 const (
@@ -133,6 +135,8 @@ func replace(newname, oldname, target string) {
 
 func init() {
 	flag.Parse()
+
+	SetLogLevel(*verbose)
 
 	if *showHelp {
 		PrintHelp(pkg, version, about, usage)
