@@ -44,19 +44,23 @@ const (
 
 //var recurse = flag.Bool("r", false, "Recursive search") //FIXME: can mean "allow depth > 1"
 
-var showHelp = flag.Bool("h", false, "Display help")
+var (
+	showHelp = flag.Bool("h", false, "Display help")
 
-//var symDirFollow = flag.Bool("F", false, "Follow symlinks when recursing (does nothing in this version)") //FIXME
-var showVersion = flag.Bool("version", false, "Show version and license info and quit")
-var nmatchMin = flag.Int("N", 0, "Minimum number of identical symlinks (in different dirs) to be enlisted. (0 means # of given directories.)")
-var includeOrdinaryFiles = flag.Bool("o", false, "Do not discard ordinary files")
-var checkSymlink = flag.Bool("c", false, "Check symlinks before enlisting")
+	// symDirFollow = flag.Bool("F", false, "Follow symlinks when recursing (does nothing in this version)") //FIXME
+	showVersion          = flag.Bool("version", false, "Show version and license info and quit")
+	nmatchMin            = flag.Int("N", 0, "Minimum number of identical symlinks (in different dirs) to be enlisted. (0 means # of given directories.)")
+	includeOrdinaryFiles = flag.Bool("o", false, "Do not discard ordinary files")
+	checkSymlink         = flag.Bool("c", false, "Check symlinks before enlisting")
+)
 
 type nametab_t map[string]int
 
-var nametabs []nametab_t
-var curNametab nametab_t
-var currentDir string
+var (
+	nametabs   []nametab_t
+	curNametab nametab_t
+	currentDir string
+)
 
 func WalkFunc(path string, info os.FileInfo, err error) error {
 	if err != nil {

@@ -54,42 +54,46 @@ const (
 	DBFILES = "/var/lib/mlocate/mlocate.db"
 )
 
-var automatedMode = flag.Bool("A", false, "Automated mode: do not proceed if there's no certain way of fixing the symlink")
-var basenameMustMatch = flag.Bool("B", false, "Basename for candidates must precisely match input's")
-var stripPath = flag.Bool("b", true, "Match only the basename part of files, stripping the path")
-var deleteDeadLinks = flag.Bool("d", false, "Delete dead links (i.e., links with no matches)")
-var existing = flag.Bool("e", false, "Check existence of target candidates before listing (handy for slocate users)")
-var showHelp = flag.Bool("h", false, "Display help and quit")
-var recurse = flag.Bool("r", false, "Recurse into directories")
-var symlinkCandidates = flag.Bool("s", false, "Include symlinks in possible target list")
-var showVersion = flag.Bool("version", false, "Show version and license info and quit")
-var stripExtension = flag.Bool("x", false, "Strip extension of the file when doing the search")
-var ignoreCase = flag.Bool("i", false, "Ignore case")
-var limit = flag.Uint("l", 0, "Limit the number of listed entries, zero means no limit.")
-var root = flag.String("root", "/", "Only files under root will be searched.")
-var yesToAll = flag.Bool("Y", false, "Assume yes to all y/n questions (they appear before making changes in the filesystem)")
-var dbPath = flag.String("D", DBFILES, "List of database file paths, separator character is : under Unix, see path/filepath/ListSeparator for other OSes.")
-var levenshteinParams = flag.String("levenshtein", "", "Levenshtein parameters. Parameter format is ThresholdLevensteinDistance,DelCost,InsCost,SubsCost all integers")
-var renameSymlink = flag.Bool("rename", false, "If the symlink filename does not match with the target file's name, rename it to match it with target. Must be used with -names option.")
-var matchNames = flag.Bool("names", false, "Consider symlinks with a name that does not match with it's target as broken")
-var showSummary = flag.Bool("summary", false, "Show a summary with misc info")
-var ignoreChars = flag.String("ignore", "", "Ignore the given set of characters in file names")
-var filter = flag.String("filter", "", `Filter search results using regexp.MatchString. Separate filters with a newline (\n). If the first character of the filter is !, those that match with the regexp are _not_ listed.`)
-var verbose = flag.Uint("v", 0, "Verbosity 0: errors only, 1: errors and warnings, 2: errors, warning, log")
+var (
+	automatedMode     = flag.Bool("A", false, "Automated mode: do not proceed if there's no certain way of fixing the symlink")
+	basenameMustMatch = flag.Bool("B", false, "Basename for candidates must precisely match input's")
+	stripPath         = flag.Bool("b", true, "Match only the basename part of files, stripping the path")
+	deleteDeadLinks   = flag.Bool("d", false, "Delete dead links (i.e., links with no matches)")
+	existing          = flag.Bool("e", false, "Check existence of target candidates before listing (handy for slocate users)")
+	showHelp          = flag.Bool("h", false, "Display help and quit")
+	recurse           = flag.Bool("r", false, "Recurse into directories")
+	symlinkCandidates = flag.Bool("s", false, "Include symlinks in possible target list")
+	showVersion       = flag.Bool("version", false, "Show version and license info and quit")
+	stripExtension    = flag.Bool("x", false, "Strip extension of the file when doing the search")
+	ignoreCase        = flag.Bool("i", false, "Ignore case")
+	limit             = flag.Uint("l", 0, "Limit the number of listed entries, zero means no limit.")
+	root              = flag.String("root", "/", "Only files under root will be searched.")
+	yesToAll          = flag.Bool("Y", false, "Assume yes to all y/n questions (they appear before making changes in the filesystem)")
+	dbPath            = flag.String("D", DBFILES, "List of database file paths, separator character is : under Unix, see path/filepath/ListSeparator for other OSes.")
+	levenshteinParams = flag.String("levenshtein", "", "Levenshtein parameters. Parameter format is ThresholdLevensteinDistance,DelCost,InsCost,SubsCost all integers")
+	renameSymlink     = flag.Bool("rename", false, "If the symlink filename does not match with the target file's name, rename it to match it with target. Must be used with -names option.")
+	matchNames        = flag.Bool("names", false, "Consider symlinks with a name that does not match with it's target as broken")
+	showSummary       = flag.Bool("summary", false, "Show a summary with misc info")
+	ignoreChars       = flag.String("ignore", "", "Ignore the given set of characters in file names")
+	filter            = flag.String("filter", "", `Filter search results using regexp.MatchString. Separate filters with a newline (\n). If the first character of the filter is !, those that match with the regexp are _not_ listed.`)
+	verbose           = flag.Uint("v", 0, "Verbosity 0: errors only, 1: errors and warnings, 2: errors, warning, log")
 
-var searchMethod = flag.String("m", "hashmap",
-	"Comma separated list of search methods: hashmap (exact matches [except for -x and -i options], very fast. Requires a hash-map initialization on first usage.), substring (using strings.Contains), wildcard (using path.Match), regexp, levenshtein (fuzzy search, see -levenshtein option as well). Search will be repeated using the next method if the current method gives 0 hits.")
-var nworkers = flag.Uint("nworkers", 1, "The number of parallel workers searching in one database")
+	searchMethod = flag.String("m", "hashmap",
+		"Comma separated list of search methods: hashmap (exact matches [except for -x and -i options], very fast. Requires a hash-map initialization on first usage.), substring (using strings.Contains), wildcard (using path.Match), regexp, levenshtein (fuzzy search, see -levenshtein option as well). Search will be repeated using the next method if the current method gives 0 hits.")
+	nworkers = flag.Uint("nworkers", 1, "The number of parallel workers searching in one database")
+)
 
-var repaired, deleted, skipped, dead int
-var db *locate.DB
-var fileNames []string
+var (
+	repaired, deleted, skipped, dead int
+	db                               *locate.DB
+	fileNames                        []string
 
-var missingTargets map[string]bool
-var brokenLinks map[string]string
+	missingTargets map[string]bool
+	brokenLinks    map[string]string
 
-var filterIn []*regexp.Regexp  // Only entries that match all these filters will be listed
-var filterOut []*regexp.Regexp // Only entries that do not match any of these filters will be listed
+	filterIn  []*regexp.Regexp // Only entries that match all these filters will be listed
+	filterOut []*regexp.Regexp // Only entries that do not match any of these filters will be listed
+)
 
 var (
 	ErrUserCancel = errors.New("user cancel")

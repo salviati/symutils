@@ -40,14 +40,16 @@ import (
 	. "symutils/common"
 )
 
-var target = flag.String("t", "", "Replacement target for matched symlinks.")
-var pattern = flag.String("p", "", "Pattern for symlink targets for replacement.")
-var matchMethod = flag.String("m", "exact", "Matching method, can be wildcard, substring, regexp or exact)")
-var caseInsensitive = flag.Bool("i", false, "Case insensitive matching")
-var recurse = flag.Bool("r", false, "Recurse into subdirectories")
-var rename = flag.Bool("R", false, "Rename symlinks as target's basename")
-var showVersion = flag.Bool("V", false, "Show version and license info and quit")
-var showHelp = flag.Bool("h", false, "Display help and quit")
+var (
+	target          = flag.String("t", "", "Replacement target for matched symlinks.")
+	pattern         = flag.String("p", "", "Pattern for symlink targets for replacement.")
+	matchMethod     = flag.String("m", "exact", "Matching method, can be wildcard, substring, regexp or exact)")
+	caseInsensitive = flag.Bool("i", false, "Case insensitive matching")
+	recurse         = flag.Bool("r", false, "Recurse into subdirectories")
+	rename          = flag.Bool("R", false, "Rename symlinks as target's basename")
+	showVersion     = flag.Bool("V", false, "Show version and license info and quit")
+	showHelp        = flag.Bool("h", false, "Display help and quit")
+)
 
 const (
 	pkg, version, author, about, usage string = "replsym", VERSION, "Doğan Çeçen, Utkan Güngördü",

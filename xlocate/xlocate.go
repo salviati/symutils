@@ -44,32 +44,36 @@ const (
 	DBFILES = "/var/lib/mlocate/mlocate.db"
 )
 
-var stripPath = flag.Bool("b", false, "Match only the basename part of files, stripping the path.")
-var countEntries = flag.Bool("c", false, "Write out the number of matching entries and quit.")
-var dbFiles = flag.String("d", DBFILES, "List of : separated database files. xlocate will try to determine the format automatically.")
-var existing = flag.Bool("e", false, "List only existing files.")
-var follow = flag.Bool("f", false, "Follow symlinks when checking for existence.")
-var ignoreCase = flag.Bool("i", false, "Ignore case.")
-var showHelp = flag.Bool("h", false, "Display help and quit")
-var limit = flag.Uint("l", 0, "Limit the number of listed entries, zero means no limit.")
-var root = flag.String("root", "/", "Only files under root will be searched.")
+var (
+	stripPath    = flag.Bool("b", false, "Match only the basename part of files, stripping the path.")
+	countEntries = flag.Bool("c", false, "Write out the number of matching entries and quit.")
+	dbFiles      = flag.String("d", DBFILES, "List of : separated database files. xlocate will try to determine the format automatically.")
+	existing     = flag.Bool("e", false, "List only existing files.")
+	follow       = flag.Bool("f", false, "Follow symlinks when checking for existence.")
+	ignoreCase   = flag.Bool("i", false, "Ignore case.")
+	showHelp     = flag.Bool("h", false, "Display help and quit")
+	limit        = flag.Uint("l", 0, "Limit the number of listed entries, zero means no limit.")
+	root         = flag.String("root", "/", "Only files under root will be searched.")
 
-var accessable = flag.Bool("a", true, "List only (read-)accessable files (disabling this option requires RO access to all given DB files)")
+	accessable = flag.Bool("a", true, "List only (read-)accessable files (disabling this option requires RO access to all given DB files)")
 
-var levenshteinParams = flag.String("levenshtein", "", "Levenshtein parameters. Parameter format is ThresholdLevensteinDistance,DelCost,InsCost,SubsCost all integers")
-var searchMethod = flag.String("m", "hashmap,substring",
-	"Comma separated list of search methods: hashmap (exact matches [except for -x and -i options], very fast. Requires a hash-map initialization on first usage.), substring (using strings.Contains), wildcard (using filepath.Match), regexp, levenshtein (fuzzy search, see -levenshtein option as well). Search will be repeated using the next method if the current method gives 0 hits.")
-var nworkers = flag.Uint("nworkers", 1, "The number of parallel workers searching in one database")
-var stripExtension = flag.Bool("E", false, "Ignore file extension. (For definition of extension, see Go's package documentation on filepath.Ext)")
-var basenameMustMatch = flag.Bool("B", false, "Basename must match (this's slightly different than the GNU Locate's -b option).")
+	levenshteinParams = flag.String("levenshtein", "", "Levenshtein parameters. Parameter format is ThresholdLevensteinDistance,DelCost,InsCost,SubsCost all integers")
+	searchMethod      = flag.String("m", "hashmap,substring",
+		"Comma separated list of search methods: hashmap (exact matches [except for -x and -i options], very fast. Requires a hash-map initialization on first usage.), substring (using strings.Contains), wildcard (using filepath.Match), regexp, levenshtein (fuzzy search, see -levenshtein option as well). Search will be repeated using the next method if the current method gives 0 hits.")
+	nworkers          = flag.Uint("nworkers", 1, "The number of parallel workers searching in one database")
+	stripExtension    = flag.Bool("E", false, "Ignore file extension. (For definition of extension, see Go's package documentation on filepath.Ext)")
+	basenameMustMatch = flag.Bool("B", false, "Basename must match (this's slightly different than the GNU Locate's -b option).")
 
-var symlinkCandidates = flag.Bool("s", true, "List symlinks") //FIXME: What about S in GNU locate?
-var showVersion = flag.Bool("V", false, "Display version and licensing information, and quit.")
-var httpAddr = flag.String("http", "", "HTTP service address (eg. ':9188')")
-var templateString = flag.String("template", `{{.N}}. <a href="file://{{.Path}}">{{.Base}}</a><br>`, "Template for HTTP results")
+	symlinkCandidates = flag.Bool("s", true, "List symlinks") //FIXME: What about S in GNU locate?
+	showVersion       = flag.Bool("V", false, "Display version and licensing information, and quit.")
+	httpAddr          = flag.String("http", "", "HTTP service address (eg. ':9188')")
+	templateString    = flag.String("template", `{{.N}}. <a href="file://{{.Path}}">{{.Base}}</a><br>`, "Template for HTTP results")
+)
 
-var db *locate.DB
-var tpl *template.Template
+var (
+	db  *locate.DB
+	tpl *template.Template
+)
 
 const (
 	pkg, version, author, about, usage string = "xlocate", VERSION, "Utkan Güngördü",

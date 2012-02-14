@@ -62,7 +62,7 @@ func existing(path string) (exists, issym bool, err error) {
 		return
 	}
 	exists = err != syscall.ENOENT
-	issym = fi.Mode & syscall.S_IFLNK == syscall.S_IFLNK
+	issym = fi.Mode&syscall.S_IFLNK == syscall.S_IFLNK
 	return
 }
 
@@ -88,7 +88,7 @@ func fileOkay(path string, options *Options) (bool, error) {
 		}
 	}
 
-	issym := fi.Mode & syscall.S_IFLNK == syscall.S_IFLNK
+	issym := fi.Mode&syscall.S_IFLNK == syscall.S_IFLNK
 	if options.Symlink == false && issym {
 		return false, nil
 	} // ...and symlinks, if necessary.

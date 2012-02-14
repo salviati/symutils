@@ -16,24 +16,26 @@ const (
 )
 
 // TODO(utkan): Ignore pattern and extension.
-var dbFiles = flag.String("d", DBFILES, "List of : separated database files. dups will try to determine the format automatically.")
-var existing = flag.Bool("e", false, "List only existing files.")
-var ignoreCase = flag.Bool("i", false, "Ignore case.")
-var root = flag.String("root", "/", "Only files under root will be searched.")
-var accessable = flag.Bool("a", true, "List only (read-)accessable files (disabling this option requires RO access to all given DB files)")
-var nworkers = flag.Uint("nworkers", 1, "The number of parallel workers searching in one database")
+var (
+	dbFiles    = flag.String("d", DBFILES, "List of : separated database files. dups will try to determine the format automatically.")
+	existing   = flag.Bool("e", false, "List only existing files.")
+	ignoreCase = flag.Bool("i", false, "Ignore case.")
+	root       = flag.String("root", "/", "Only files under root will be searched.")
+	accessable = flag.Bool("a", true, "List only (read-)accessable files (disabling this option requires RO access to all given DB files)")
+	nworkers   = flag.Uint("nworkers", 1, "The number of parallel workers searching in one database")
 
-var _minSize = flag.Uint64("min", 0, "Set the minumum file size (see the unit option), smaller files will be discarded.")
-var matchSize = flag.Bool("s", true, "Compare file sizes.")
+	_minSize  = flag.Uint64("min", 0, "Set the minumum file size (see the unit option), smaller files will be discarded.")
+	matchSize = flag.Bool("s", true, "Compare file sizes.")
 
-// var ncompare = flag.Uint("n", 0, "Compare first n bytes before declaring files identical")
+	// var ncompare = flag.Uint("n", 0, "Compare first n bytes before declaring files identical")
 
-var showVersion = flag.Bool("V", false, "Display version and licensing information, and quit.")
-var showHelp = flag.Bool("h", false, "Display help and quit")
+	showVersion = flag.Bool("V", false, "Display version and licensing information, and quit.")
+	showHelp    = flag.Bool("h", false, "Display help and quit")
 
-var unit = flag.String("unit", "B", "B for bytes, K for KiB, M for MiB, G for GiB, T for TiB")
-var yesToAll = flag.Bool("Y", false, "Assume yes to all y/n questions (they appear before making changes in the filesystem)")
-var action = flag.String("action", "none", "What to do with duplicates? Valid choices are none (nothing), rm (remove), ln (link back to origin).")
+	unit     = flag.String("unit", "B", "B for bytes, K for KiB, M for MiB, G for GiB, T for TiB")
+	yesToAll = flag.Bool("Y", false, "Assume yes to all y/n questions (they appear before making changes in the filesystem)")
+	action   = flag.String("action", "none", "What to do with duplicates? Valid choices are none (nothing), rm (remove), ln (link back to origin).")
+)
 
 var db *locate.DB
 
