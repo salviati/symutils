@@ -19,6 +19,7 @@ const (
 var dbFiles = flag.String("d", DBFILES, "List of : separated database files. dups will try to determine the format automatically.")
 var existing = flag.Bool("e", false, "List only existing files.")
 var ignoreCase = flag.Bool("i", false, "Ignore case.")
+var root = flag.String("root", "/", "Only files under root will be searched.")
 var accessable = flag.Bool("a", true, "List only (read-)accessable files (disabling this option requires RO access to all given DB files)")
 var nworkers = flag.Uint("nworkers", 1, "The number of parallel workers searching in one database")
 
@@ -85,6 +86,7 @@ func init() {
 		Symlink:    false,
 		HashMap:    true,
 		NWorkers:   *nworkers,
+		Root:       *root,
 	}
 
 	var err error
