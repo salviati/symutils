@@ -225,11 +225,12 @@ func Locate(db *DB, method, pattern string, ch chan string) (err error) {
 // A wrapper for the Locate.+ functions.
 // Stores results of a Locate call in a string array, returns afterwards.
 func locateIntoArray(pattern string, locateFn func(pattern string, ch chan string) error) (matches []string, err error) {
-	nameMap := make(map[string]bool)
+	nameMap := make(map[string]struct{})
+	var elem struct{}
 	ch := make(chan string)
 	go func() { err = locateFn(pattern, ch) }()
 	for f := range ch {
-		nameMap[f] = true
+		nameMap[f] = elem
 	}
 	nameArray := make([]string, len(nameMap))
 	i := 0

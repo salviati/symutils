@@ -53,11 +53,12 @@ func (db *DB) readDBs() error {
 		return nil
 	}
 
-	fmap := make(map[string]bool)
+	fmap := make(map[string]struct{})
+	var elem struct{}
 	for _, dbf := range db.dbFilenames {
 		nametab, err := db.readDB(dbf)
 		for _, f := range nametab {
-			fmap[f] = true
+			fmap[f] = elem
 		}
 		if err != nil {
 			return err
