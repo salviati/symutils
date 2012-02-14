@@ -52,6 +52,7 @@ var follow = flag.Bool("f", false, "Follow symlinks when checking for existence.
 var ignoreCase = flag.Bool("i", false, "Ignore case.")
 var showHelp = flag.Bool("h", false, "Display help and quit")
 var limit = flag.Uint("l", 0, "Limit the number of listed entries, zero means no limit.")
+var root = flag.String("root", "/", "Only files under root will be searched.")
 
 var accessable = flag.Bool("a", true, "List only (read-)accessable files (disabling this option requires RO access to all given DB files)")
 
@@ -114,6 +115,7 @@ func init() {
 		LevenshteinCost:      fuzzyCost,
 		LevenshteinThreshold: fuzzyThreshold,
 		NWorkers:             *nworkers,
+		Root:                 *root,
 	}
 
 	var err error

@@ -66,6 +66,7 @@ var showVersion = flag.Bool("version", false, "Show version and license info and
 var stripExtension = flag.Bool("x", false, "Strip extension of the file when doing the search")
 var ignoreCase = flag.Bool("i", false, "Ignore case")
 var limit = flag.Uint("l", 0, "Limit the number of listed entries, zero means no limit.")
+var root = flag.String("root", "/", "Only files under root will be searched.")
 var yesToAll = flag.Bool("Y", false, "Assume yes to all y/n questions (they appear before making changes in the filesystem)")
 var dbPath = flag.String("D", DBFILES, "List of database file paths, separator character is : under Unix, see path/filepath/ListSeparator for other OSes.")
 var levenshteinParams = flag.String("levenshtein", "", "Levenshtein parameters. Parameter format is ThresholdLevensteinDistance,DelCost,InsCost,SubsCost all integers")
@@ -295,11 +296,11 @@ func init() {
 	}
 
 	Logf("It's recommended that you update your database files by updatedb(8) prior to execution.\n")
-	
+
 	if *verbose < LogLevelMin || *verbose > LogLevelMax {
 		log.Fatal("Verbosity parameter should be between", LogLevelMin, "and", LogLevelMax)
 	}
-	
+
 	LogLevel = LogLevelType(int(*verbose))
 
 	if *filter != "" {
@@ -341,6 +342,7 @@ func init() {
 		LevenshteinCost:      fuzzyCost,
 		LevenshteinThreshold: fuzzyThreshold,
 		NWorkers:             *nworkers,
+		Root:                 *root,
 	}
 
 	var err error

@@ -20,4 +20,5 @@ type Options struct {
 	LevenshteinThreshold int                   // Threshold value for Levenshtein cost.
 	MaxMatches           uint                  // Search will halt when the number of hits reaches to this number.
 	NWorkers             uint                  // Number of goroutines for searching in a single database.
+	Root                 string                // Filenames not under Root will be discarded from the databases. Empty Root means "/".
 }

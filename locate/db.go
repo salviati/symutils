@@ -152,15 +152,24 @@ func (db *DB) readMlocateDB(fb []byte) (nametab []string, e error) {
 	curDir := rootpath
 
 	nametab = make([]string, 0)
-	for {
+	// ok becomes true when we reached the requested db.option.Root directory,
+	// and we start adding files so forth.
+	alwaysOk := filepath.HasPrefix(rootpath, db.options.Root)
+	for ok := false; ; {
 		var name string
 		name, rem = nextCstr(rem)
 		if dirNameNow {
-			curDir = name
+			if curDir = name; !alwaysOk {
+				ok = filepath.HasPrefix(curDir, db.options.Root)
+			}
 			dirNameNow = false
-			nametab = append(nametab, curDir)
+			if alwaysOk || ok {
+				nametab = append(nametab, curDir)
+			}
 		} else {
-			nametab = append(nametab, curDir+"/"+name)
+			if alwaysOk || ok {
+				nametab = append(nametab, curDir+"/"+name)
+			}
 		}
 		ftype := rem[0]
 		rem = rem[1:]
@@ -185,6 +194,11 @@ func (db *DB) readMlocateDB(fb []byte) (nametab []string, e error) {
 func NewDB(dbFilenames []string, options *Options) (db *DB, err error) {
 	db = &DB{dbFilenames: dbFilenames}
 	db.options = *options
+
+	db.options.Root = filepath.Clean(db.options.Root)
+	if db.options.Root == "" {
+		db.options.Root = "/"
+	}
 
 	// BUG(utkan): Accessable option should not require RO access to _all_ DB files.
 	if db.options.Accessable { // FIXME(utkan): No R_OK(=4) in syscall package!
