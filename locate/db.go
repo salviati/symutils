@@ -160,7 +160,7 @@ func (db *DB) readMlocateDB(fb []byte) (nametab []string, e error) {
 		name, rem = nextCstr(rem)
 		if dirNameNow {
 			if curDir = name; !alwaysOk {
-				ok = filepath.HasPrefix(curDir, db.options.Root)
+				ok = filepath.HasPrefix(curDir, db.options.Root) // FIXME(utkan): This is too inefficient.
 			}
 			dirNameNow = false
 			if alwaysOk || ok {
