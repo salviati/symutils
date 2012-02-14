@@ -175,7 +175,7 @@ func main() {
 		for _, path := range paths {
 			fi, err := os.Lstat(path)
 			if err != nil {
-				Warnf(path, ":", err)
+				Warnln(err)
 				continue
 			}
 			if fi.Mode()&os.ModeType != 0 {

@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"sync"
 	"syscall"
+	"log"
 )
 
 // A list paths, indexed by a string.
@@ -128,7 +129,7 @@ func (db *DB) readMlocateDB(fb []byte) (nametab []string, e error) {
 		return
 	}
 
-	blocksize := 0
+	blocksize := int32(0)
 	binary.Read(bytes.NewBuffer(fb[8:12]), binary.BigEndian, &blocksize)
 
 	dbversion := fb[12]
@@ -142,7 +143,7 @@ func (db *DB) readMlocateDB(fb []byte) (nametab []string, e error) {
 
 	stampsize := 16
 
-	rem = rem[blocksize+stampsize:]
+	rem = rem[int(blocksize)+stampsize:]
 	entry := rem
 
 	// Get the entries themselves
@@ -155,13 +156,17 @@ func (db *DB) readMlocateDB(fb []byte) (nametab []string, e error) {
 	// ok becomes true when we reached the requested db.option.Root directory,
 	// and we start adding files so forth.
 	alwaysOk := filepath.HasPrefix(rootpath, db.options.Root)
+	log.Println("alw", alwaysOk)
+	log.Println("rootpath",rootpath)
 	for ok := false; ; {
 		var name string
 		name, rem = nextCstr(rem)
 		if dirNameNow {
-			if curDir = name; !alwaysOk {
-				ok = filepath.HasPrefix(curDir, db.options.Root) // FIXME(utkan): This is too inefficient.
+			if !alwaysOk {
+				ok = filepath.HasPrefix(name, db.options.Root) // FIXME(utkan): This is too inefficient.
 			}
+			curDir = name
+			log.Println(curDir)
 			dirNameNow = false
 			if alwaysOk || ok {
 				nametab = append(nametab, curDir)
