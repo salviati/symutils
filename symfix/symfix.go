@@ -198,12 +198,13 @@ func symfix(path string) error {
 
 	Logf("%v -> %v (broken)\n", path, dst)
 
-	// locate does not store trailing / for directories, so we gotta stip it off as well.
+	// locate does not store trailing / for directories, so we gotta strip it off as well.
 	if dst[len(dst)-1] == '/' {
 		dst = dst[0 : len(dst)-1]
 	}
 	_, pattern := filepath.Split(dst)
 
+	// look up possible targets using locate
 	matches, err := mylocate(db, pattern)
 
 	if err != nil {
