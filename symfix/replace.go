@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
-	"errors"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -14,9 +14,9 @@ import (
 
 type Rule struct {
 	method string
-	s string // Source target filename, or the pattern to match the source target filename
-	d string // New target for the symlink
-	re *regexp.Regexp
+	s      string // Source target filename, or the pattern to match the source target filename
+	d      string // New target for the symlink
+	re     *regexp.Regexp
 }
 
 func trim(str string) string {
@@ -34,36 +34,42 @@ func NewRule(line string) (*Rule, error) {
 		r.method = "hashmap"
 	} else {
 		switch line[0] {
-			case 's': r.method = "substring"
-			case 'w': r.method = "wildcard"
-			case 'r': r.method = "regexp"
-			default: return nil, errors.New("Unknown method: "+line[0:1])
+		case 's':
+			r.method = "substring"
+		case 'w':
+			r.method = "wildcard"
+		case 'r':
+			r.method = "regexp"
+		default:
+			return nil, errors.New("Unknown method: " + line[0:1])
 		}
 		line = line[1:]
 	}
 
 	nbackslash := 0
 	for _, c := range line {
-		if c=='`' {nbackslash++}
+		if c == '`' {
+			nbackslash++
+		}
 	}
 	if nbackslash != 4 {
-		return nil, errors.New("Invalid input: "+line)
+		return nil, errors.New("Invalid input: " + line)
 	}
-	
-// 	line
+
+	// 	line
 	pos := 0
 
-	next := func () (str string) {
+	next := func() (str string) {
 		for i, c := range line[pos:] {
 			if c == '`' {
-				pos = i+1
+				pos = i + 1
 				break
 			}
 		}
 
 		for i, c := range line[pos:] {
 			if c == '`' {
-				pos = i+1
+				pos = i + 1
 				break
 			}
 			str += string(c)
@@ -72,11 +78,11 @@ func NewRule(line string) (*Rule, error) {
 	}
 	r.s = next()
 	r.d = next()
-	
+
 	if r.s == "" || r.d == "" {
 		return nil, errors.New("src and dst should not be empty strings")
 	}
-	
+
 	if r.method == "regexp" {
 		r.re = regexp.MustCompile(r.s)
 	}
@@ -84,16 +90,21 @@ func NewRule(line string) (*Rule, error) {
 	return r, nil
 }
 
-func (r* Rule) String() string {
+func (r *Rule) String() string {
 	return r.method + ": " + r.s + " -> " + r.d
 }
 
 func (r *Rule) Match(pattern string) bool {
-	switch  r.method {
-		case "hashmap": return pattern == r.s
-		case "substring": return strings.Contains(pattern, r.s)
-		case "wildcard": m, _ := filepath.Match(pattern, r.s); return m
-		case "regexp": return r.re.MatchString(r.s)
+	switch r.method {
+	case "hashmap":
+		return pattern == r.s
+	case "substring":
+		return strings.Contains(pattern, r.s)
+	case "wildcard":
+		m, _ := filepath.Match(pattern, r.s)
+		return m
+	case "regexp":
+		return r.re.MatchString(r.s)
 	}
 	panic("shouldn't happen")
 }
@@ -104,9 +115,11 @@ type Replacer struct {
 
 func (replacer *Replacer) Add(line string) error {
 	rule, err := NewRule(line)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	replacer.rules = append(replacer.rules, rule)
-	
+
 	return nil
 }
 
@@ -115,16 +128,16 @@ func NewReplacer(rulefile string) (replacer *Replacer, err error) {
 	if err != nil {
 		return
 	}
-	
+
 	file, err := ioutil.ReadAll(f)
 	if err != nil {
 		return
 	}
-	
+
 	replacer = new(Replacer)
-	
+
 	buf := bytes.NewBuffer(file)
-	for nline:=1; ;nline++ {
+	for nline := 1; ; nline++ {
 		line, err := buf.ReadString('\n') // BUG(utkan): Will not work in Windows.
 		line = trim(line)
 
@@ -133,19 +146,18 @@ func NewReplacer(rulefile string) (replacer *Replacer, err error) {
 				return nil, fmt.Errorf("NewReplacer: invalid input in rule file %s:%d: %s\n", rulefile, nline, err)
 			}
 		}
-	
+
 		if err == io.EOF {
 			break
 		}
-		
+
 		if err != nil {
 			return nil, err
 		}
 	}
-	
+
 	return
 }
-
 
 func (r *Replacer) Replace(filename string) (matches []string) {
 	matches = make([]string, 0)

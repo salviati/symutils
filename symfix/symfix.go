@@ -94,7 +94,7 @@ var (
 
 	filterIn  []*regexp.Regexp // Entries that match all these filters will be listed
 	filterOut []*regexp.Regexp // Entries that do not match any of these filters will be listed
-	
+
 	replacer *Replacer
 )
 
@@ -250,7 +250,7 @@ func symfix(path string) error {
 		return nil
 	}
 
-	choice, cancel := Choose("(Fixing: " + path + " -> " + dst + ")\nWhich one seems to be the correct target?", matches)
+	choice, cancel := Choose("(Fixing: "+path+" -> "+dst+")\nWhich one seems to be the correct target?", matches)
 	if cancel {
 		return ErrUserCancel
 	} //user cancel
@@ -294,7 +294,6 @@ func symfixr(filename string) {
 
 func init() {
 	var err error
-	
 
 	missingTargets = make(map[string]bool)
 	brokenLinks = make(map[string]string)
@@ -355,7 +354,7 @@ func init() {
 		NWorkers:             *nworkers,
 		Root:                 *root,
 	}
-	
+
 	if *replaceFile != "" {
 		replacer, err = NewReplacer(*replaceFile)
 		if err != nil {
@@ -364,6 +363,9 @@ func init() {
 		Logf("Read replacement rules:")
 		for _, r := range replacer.rules {
 			Logln("*", r)
+			if r.method == "hashmap" {
+				options.HashMap = true
+			}
 		}
 	}
 
