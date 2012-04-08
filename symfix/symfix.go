@@ -219,10 +219,13 @@ func symfix(path string) error {
 	}
 
 	if len(matches) == 0 {
-		Logf("No matches for: %v\n", path)
+		Logf("No matches for: %v\n", dst)
 		if replacer != nil {
-			Logf("Using replacement rules to get targets\n", path)
-			matches = replacer.Replace(path)
+			Logln("Using replacement rules to get targets for", dst)
+			matches = replacer.Replace(dst)
+			if len(matches) == 0 {
+				Logln("No matches again")
+			}
 		}
 	}
 

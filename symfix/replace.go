@@ -60,16 +60,16 @@ func NewRule(line string) (*Rule, error) {
 	pos := 0
 
 	next := func() (str string) {
-		for i, c := range line[pos:] {
+		for _, c := range line[pos:] {
+			pos++
 			if c == '`' {
-				pos = i + 1
 				break
 			}
 		}
 
-		for i, c := range line[pos:] {
+		for _, c := range line[pos:] {
+			pos++
 			if c == '`' {
-				pos = i + 1
 				break
 			}
 			str += string(c)
