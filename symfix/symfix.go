@@ -195,7 +195,7 @@ func mylocate(db *locate.DB, pattern string) (matches []string, err error) {
 func symfix(path string) error {
 	ok, dst, _ := LinkAlive(path, *matchNames)
 	if ok {
-		Logf("%v -> %v\n", path, dst)
+		//Logf("%v -> %v\n", path, dst)
 		return nil
 	}
 
@@ -360,7 +360,7 @@ func init() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		Logf("Read replacement rules:")
+		Logln("Read replacement rules:")
 		for _, r := range replacer.rules {
 			Logln("*", r)
 			if r.method == "hashmap" {
