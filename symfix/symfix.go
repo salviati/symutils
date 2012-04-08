@@ -250,7 +250,7 @@ func symfix(path string) error {
 		return nil
 	}
 
-	choice, cancel := Choose("Which one seems to be the correct target?", matches)
+	choice, cancel := Choose("(Fixing: " + path + " -> " + dst + ")\nWhich one seems to be the correct target?", matches)
 	if cancel {
 		return ErrUserCancel
 	} //user cancel

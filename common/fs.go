@@ -29,21 +29,19 @@ func FileExists(fname string) bool {
 /* Checks whether the link is dead or not.
    Returns the alive state, link's target (if alive) and error. */
 func LinkAlive(fname string, matchNames bool) (isAlive bool, dst string, err error) {
-	dst, err = filepath.EvalSymlinks(fname)
+	dst, err = os.Readlink(fname)
 	if err != nil {
-		Logf("%v\n", err)
-		isAlive = false
+		Logln(err)
 		return
 	}
 
-	if dst[0] != '/' { //relative link
+	if filepath.IsAbs(dst) == false { //relative link
 		dirname, _ := filepath.Split(fname)
 		dst = filepath.Join(dirname, dst)
 	}
 
 	if matchNames {
 		if filepath.Base(dst) != filepath.Base(fname) {
-			isAlive = false
 			return
 		}
 	}

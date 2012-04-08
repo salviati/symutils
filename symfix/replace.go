@@ -73,6 +73,10 @@ func NewRule(line string) (*Rule, error) {
 	r.s = next()
 	r.d = next()
 	
+	if r.s == "" || r.d == "" {
+		return nil, errors.New("src and dst should not be empty strings")
+	}
+	
 	if r.method == "regexp" {
 		r.re = regexp.MustCompile(r.s)
 	}
