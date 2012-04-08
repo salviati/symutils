@@ -128,7 +128,7 @@ func NewReplacer(rulefile string) (replacer *Replacer, err error) {
 		line, err := buf.ReadString('\n') // BUG(utkan): Will not work in Windows.
 		line = trim(line)
 
-		if len(line) != 0 {
+		if len(line) != 0 && line[0] != '#' {
 			if err = replacer.Add(line); err != nil {
 				return nil, fmt.Errorf("NewReplacer: invalid input in rule file %s:%d: %s\n", rulefile, nline, err)
 			}
