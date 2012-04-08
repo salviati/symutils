@@ -77,6 +77,7 @@ var (
 	ignoreChars       = flag.String("ignore", "", "Ignore the given set of characters in file names")
 	filter            = flag.String("filter", "", `Filter search results using regexp.MatchString. Separate filters with a newline (\n). If the first character of the filter is !, those that match with the regexp are _not_ listed.`)
 	verbose           = flag.Uint("v", 0, "Verbosity 0: errors only, 1: errors and warnings, 2: errors, warning, log")
+	replaceFile       = flag.String("replace", "", "Name of the file containing replacement rules. To be documented here, for now see replace.go for details.")
 
 	searchMethod = flag.String("m", "hashmap",
 		"Comma separated list of search methods: hashmap (exact matches [except for -x and -i options], very fast. Requires a hash-map initialization on first usage.), substring (using strings.Contains), wildcard (using path.Match), regexp, levenshtein (fuzzy search, see -levenshtein option as well). Search will be repeated using the next method if the current method gives 0 hits.")
@@ -91,8 +92,10 @@ var (
 	missingTargets map[string]bool
 	brokenLinks    map[string]string
 
-	filterIn  []*regexp.Regexp // Only entries that match all these filters will be listed
-	filterOut []*regexp.Regexp // Only entries that do not match any of these filters will be listed
+	filterIn  []*regexp.Regexp // Entries that match all these filters will be listed
+	filterOut []*regexp.Regexp // Entries that do not match any of these filters will be listed
+	
+	replacer *Replacer
 )
 
 var (
@@ -217,6 +220,10 @@ func symfix(path string) error {
 
 	if len(matches) == 0 {
 		Logf("No matches for: %v\n", path)
+		if replacer != nil {
+			Logf("Using replacement rules to get targets\n", path)
+			matches = replacer.Replace(path)
+		}
 	}
 
 	if len(matches) == 0 {
@@ -286,6 +293,9 @@ func symfixr(filename string) {
 }
 
 func init() {
+	var err error
+	
+
 	missingTargets = make(map[string]bool)
 	brokenLinks = make(map[string]string)
 
@@ -345,8 +355,18 @@ func init() {
 		NWorkers:             *nworkers,
 		Root:                 *root,
 	}
+	
+	if *replaceFile != "" {
+		replacer, err = NewReplacer(*replaceFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		Logf("Read replacement rules:")
+		for _, r := range replacer.rules {
+			Logln("*", r)
+		}
+	}
 
-	var err error
 	Logf("Reading databases...\n")
 	timeStart := time.Now()
 	db, err = locate.NewDB(filepath.SplitList(*dbPath), &options)
