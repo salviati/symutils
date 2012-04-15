@@ -57,14 +57,10 @@ func MakeAbsolute(filename string, dirname string) string {
 	if !filepath.IsAbs(filename) { //relative link
 		filename = filepath.Join(dirname, filename)
 	}
-	if !filepath.IsAbs(filename) {
-		wd, err := os.Getwd()
-		if err != nil {
-			Errorf("%s\n", err)
-			return filename
-		}
-		filename = filepath.Join(wd, filename)
-	}
 
-	return filepath.Clean(filename)
+	var err error
+	if filename, err = filepath.Abs(filename); err != nil {
+		Errorln(err)
+	}
+	return filename
 }
